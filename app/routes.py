@@ -17,38 +17,41 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from flask import Flask, jsonify, abort, make_response, request
+from app import app, ibmq_handler
+from flask import jsonify, abort, request
 import implementation_handler
-from qiskit import IBMQ, transpile, assemble
-import json
+from qiskit import transpile, assemble
 
-app = Flask(__name__)
 
-if __name__ == '__main__':
-    app.run()
+@app.route('/qiskit-service/api/v1.0/jobs(<int:job_id>', methods=['GET'])
+def get_job(job_id):
+    return None
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
 def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate circuit and return depth and width."""
-    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json:
+    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
+            or not 'token' in request.json:
         abort(400)
     impl_url = request.json['impl-url']
     print(impl_url)
     qpu_name = request.json['qpu-name']
+    token = request.json['token']
     input_params = request.json.get('input-params', "")
     print(input_params)
 
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
     print(circuit)
 
-    IBMQ.load_account()
-    provider = IBMQ.get_provider(group='open')
-    backend = provider.get_backend(qpu_name)
+    backend = ibmq_handler.get_qpu(token, qpu_name)
     transpiled_circuit = transpile(circuit, backend=backend)
 
     depth = transpiled_circuit.depth()
     width = transpiled_circuit.width()
+
+
+    # ibmq_handler.delete_token(token)
 
     return jsonify({'depth': depth}, {'width': width})
 
@@ -68,32 +71,15 @@ def execute_circuit():
 
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
 
-    IBMQ.save_account(token, overwrite=True)
-    IBMQ.load_account()
-    provider = IBMQ.get_provider(group='open')
-    backend = provider.get_backend(qpu_name)
-
+    backend = ibmq_handler.get_qpu(token, qpu_name)
     transpiled_circuit = transpile(circuit, backend=backend)
+    print(transpiled_circuit.depth())
+    print(transpiled_circuit.width())
 
-    qobj = assemble(transpiled_circuit, shots=shots)
-    qobj_dict = qobj.to_dict()
-    data_dict = {'qObject': qobj_dict, 'backend': {'name': qpu_name}}
-    data = json.dumps(data_dict)
-    print(data)
-
-    return jsonify({'create_qobj': 'worked'})
+    json_qobj = ibmq_handler.get_qObject_in_json(transpiled_circuit, qpu_name, shots)
+    print(json_qobj)
 
 
-@app.errorhandler(500)
-def not_found(error):
-    return make_response(jsonify({'error': 'Internal Server Error', 'statusCode': '500'}), 500)
+    # ibmq_handler.delete_token(token)
 
-
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found', 'statusCode': '404'}), 404)
-
-
-@app.errorhandler(400)
-def bad_request(error):
-    return make_response(jsonify({'error': 'Bad Request', 'statusCode': '400'}), 400)
+    return jsonify({'create_qobj': 'worked'}) # return Object-ID of Job
