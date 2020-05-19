@@ -17,10 +17,10 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, ibmq_handler
+from app import app, ibmq_handler, implementation_handler
 from flask import jsonify, abort, request
-import implementation_handler
-from qiskit import transpile, assemble
+from qiskit import transpile
+import logging
 
 
 @app.route('/qiskit-service/api/v1.0/jobs(<int:job_id>', methods=['GET'])
@@ -41,18 +41,23 @@ def transpile_circuit():
     input_params = request.json.get('input-params', "")
     print(input_params)
 
+    logging.info('Preparing implementation...')
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
     print(circuit)
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
+    logging.info('Start transpiling...')
     transpiled_circuit = transpile(circuit, backend=backend)
+    print(transpiled_circuit)
 
     depth = transpiled_circuit.depth()
     width = transpiled_circuit.width()
-
+    print("Depth: {}".format(depth))
+    print("Width: {}".format(width))
 
     # ibmq_handler.delete_token(token)
 
+    logging.info('Returning HTTP response to client...')
     return jsonify({'depth': depth}, {'width': width})
 
 
@@ -69,17 +74,20 @@ def execute_circuit():
     input_params = request.json.get('input-params', "")
     shots = request.json.get('shots', "1024")
 
+    logging.info('Preparing implementation...')
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
+    logging.info('Start transpiling...')
     transpiled_circuit = transpile(circuit, backend=backend)
-    print(transpiled_circuit.depth())
-    print(transpiled_circuit.width())
+    print(transpiled_circuit)
+    print("Depth: {}".format(transpiled_circuit.depth()))
+    print("Width: {}".format(transpiled_circuit.width()))
 
-    json_qobj = ibmq_handler.get_qObject_in_json(transpiled_circuit, qpu_name, shots)
-    print(json_qobj)
-
+    logging.info('Start executing...')
+    ibmq_handler.execute_job(transpiled_circuit, shots, backend)
 
     # ibmq_handler.delete_token(token)
 
+    logging.info('Returning HTTP response to client...')
     return jsonify({'create_qobj': 'worked'}) # return Object-ID of Job

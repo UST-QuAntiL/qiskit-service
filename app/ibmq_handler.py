@@ -1,12 +1,26 @@
-from qiskit import IBMQ, assemble
-from qiskit.providers.jobstatus import JobStatus
-from qiskit.providers.ibmq.job import IBMQJobApiError, IBMQJobError
+# ******************************************************************************
+#  Copyright (c) 2020 University of Stuttgart
+#
+#  See the NOTICE file(s) distributed with this work for additional
+#  information regarding copyright ownership.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+# ******************************************************************************
+
+from qiskit import IBMQ, assemble, QiskitError
+from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers import JobError
 import json
-import asyncio
-
-from qiskit.providers.ibmq.api.rest import job, backend
-
 
 
 def get_qpu(token, qpu_name):
@@ -28,19 +42,35 @@ def get_qObject_in_json(transpiled_circuit, qpu_name, shots):
     data = json.dumps(data_dict)
     return data
 
-async def run_job(transpiled_circuit, shots):
+
+def execute_job(transpiled_circuit, shots, backend):
     qobj = assemble(transpiled_circuit, shots=shots)
+
     job = backend.run(qobj)
 
-    try:
+    job_status = job.status()
+    while job_status not in JOB_FINAL_STATES:
+        print("The job is still running")
         job_status = job.status()
-        if job_status is JobStatus.RUNNING:
-            print("The job is still running")
-    except IBMQJobApiError as ex:
-        print("Something wrong happend!: {}".format(ex))
 
     try:
-        job_result = job.result()  # It will block until the job finishes.
-        print("The job finished with result {}".format(job_result))
+        job_result = job.result() # It will block until the job finishes.
+        print("\nJob result:")
+        print(job_result)
+        try:
+            print("\nState vector:")
+            print(job_result.get_statevector())
+        except QiskitError:
+            print("No statevector available!")
+        try:
+            print("\nCounts:")
+            print(job_result.get_counts())
+        except QiskitError:
+            print("No counts available!")
+        try:
+            print("\nUnitary:")
+            print(job_result.get_unitary())
+        except QiskitError:
+            print("No unitary available!")
     except JobError as ex:
-        print("Something wrong happened!: {}".format(ex))
+        print("Something wrong happened with the result!: {}".format(ex))

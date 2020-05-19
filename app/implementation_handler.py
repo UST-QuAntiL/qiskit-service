@@ -26,7 +26,7 @@ from importlib import reload
 def prepare_code_from_url(url, input_params):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit"""
     impl = request.urlopen(url).read().decode("utf-8")
-    print("Hier:" + impl)
+    print(impl)
     temp_dir = tempfile.mkdtemp()
     with open(os.path.join(temp_dir, "__init__.py"), "w") as f:
         f.write("")
