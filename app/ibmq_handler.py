@@ -22,16 +22,10 @@ from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from qiskit.providers.ibmq.api.exceptions import RequestsApiError
-import json
-
-get_qpu_aborted = False
-execute_job_aborted = False
 
 
 def get_qpu(token, qpu_name):
     """Load account from token. Get backend."""
-    global get_qpu_aborted
-    get_qpu_aborted = False
     try:
         IBMQ.save_account(token, overwrite=True)
         IBMQ.load_account()
@@ -39,7 +33,6 @@ def get_qpu(token, qpu_name):
         backend = provider.get_backend(qpu_name)
         return backend
     except (QiskitBackendNotFoundError, RequestsApiError):
-        get_qpu_aborted = True
         return None
 
 
@@ -50,8 +43,6 @@ def delete_token():
 
 def execute_job(transpiled_circuit, shots, backend):
     """Genereate qObject from transpiled circuit and execute it. Return result."""
-    global execute_job_aborted
-    execute_job_aborted = False
 
     try:
         qobj = assemble(transpiled_circuit, shots=shots)
@@ -90,5 +81,4 @@ def execute_job(transpiled_circuit, shots, backend):
             print("No unitary available!")
         return {'job_result_raw': job_result_dict, 'statevector': statevector, 'counts': counts, 'unitary': unitary}
     except (JobError, JobTimeoutError):
-        execute_job_aborted = True
         return None

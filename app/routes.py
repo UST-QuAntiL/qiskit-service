@@ -41,31 +41,32 @@ def transpile_circuit():
     print(input_params)
 
     logging.info('Preparing implementation...')
+
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-    if not implementation_handler.is_aborted:
-        print(circuit)
-
-        backend = ibmq_handler.get_qpu(token, qpu_name)
-        if not ibmq_handler.get_qpu_aborted:
-            logging.info('Start transpiling...')
-            try:
-                transpiled_circuit = transpile(circuit, backend=backend)
-                print(transpiled_circuit)
-
-                depth = transpiled_circuit.depth()
-                width = transpiled_circuit.width()
-                print("Depth: {}".format(depth))
-                print("Width: {}".format(width))
-            except TranspilerError:
-                return jsonify({'error': 'too many qubits required'}), 200
-        else:
-            # ibmq_handler.delete_token()
-            abort(404)
-        # ibmq_handler.delete_token()
-        logging.info('Returning HTTP response to client...')
-        return jsonify({'depth': depth}, {'width': width}), 200
-    else:
+    if not circuit:
         abort(404)
+    print(circuit)
+
+    backend = ibmq_handler.get_qpu(token, qpu_name)
+    if not backend:
+        # ibmq_handler.delete_token()
+        abort(404)
+
+    logging.info('Start transpiling...')
+    try:
+        transpiled_circuit = transpile(circuit, backend=backend)
+        print(transpiled_circuit)
+
+        depth = transpiled_circuit.depth()
+        width = transpiled_circuit.width()
+        print("Depth: {}".format(depth))
+        print("Width: {}".format(width))
+    except TranspilerError:
+        return jsonify({'error': 'too many qubits required'}), 200
+
+    # ibmq_handler.delete_token()
+    logging.info('Returning HTTP response to client...')
+    return jsonify({'depth': depth}, {'width': width}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
@@ -98,10 +99,8 @@ def execute_circuit():
 def get_result(result_id):
     """Return result when it is available."""
     result = Result.query.get(result_id)
-    result_dict = json.loads(result.result)
-    response = jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict})
     if result.complete:
-        response.status_code = 303
+        result_dict = json.loads(result.result)
+        return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict}), 200
     else:
-        response.status_code = 200
-    return response
+        return jsonify({'id': result.id, 'complete': result.complete}), 200

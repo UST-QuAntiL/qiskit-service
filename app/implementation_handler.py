@@ -17,18 +17,14 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from flask import abort
 from urllib import request, error
 import tempfile
 import os, sys, shutil
 from importlib import reload
 
-is_aborted = False
 
 def prepare_code_from_url(url, input_params):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
-    global is_aborted
-    is_aborted = False
     try:
         impl = request.urlopen(url).read().decode("utf-8")
         print(impl)
@@ -49,5 +45,4 @@ def prepare_code_from_url(url, input_params):
 
         return circuit
     except (error.HTTPError, error.URLError):
-        is_aborted = True
         return None

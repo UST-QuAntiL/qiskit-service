@@ -30,34 +30,40 @@ def execute(impl_url, input_params, token, qpu_name, shots):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
     result = Result.query.get(job.get_id())
+
     logging.info('Preparing implementation...')
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-    if not implementation_handler.is_aborted:
+    if circuit:
         backend = ibmq_handler.get_qpu(token, qpu_name)
-        if not ibmq_handler.get_qpu_aborted:
+        if backend:
             logging.info('Start transpiling...')
             try:
                 transpiled_circuit = transpile(circuit, backend=backend)
                 print(transpiled_circuit)
                 print("Depth: {}".format(transpiled_circuit.depth()))
                 print("Width: {}".format(transpiled_circuit.width()))
+
                 logging.info('Start executing...')
                 job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
-                if not ibmq_handler.execute_job_aborted:
+                if job_result:
                     result.result = json.dumps(job_result)
                     result.complete = True
                     db.session.commit()
                 else:
                     result.result = json.dumps({'error': 'execution failed'})
+                    result.complete = True
                     db.session.commit()
             except TranspilerError:
                 result.result = json.dumps({'error': 'too many qubits required'})
+                result.complete = True
                 db.session.commit()
         else:
             result.result = json.dumps({'error': 'qpu-name or token wrong'})
+            result.complete = True
             db.session.commit()
     else:
         result.result = json.dumps({'error': 'URL not found'})
+        result.complete = True
         db.session.commit()
 
     # ibmq_handler.delete_token()
