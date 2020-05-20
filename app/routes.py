@@ -17,15 +17,12 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, ibmq_handler, implementation_handler
+from app import app, ibmq_handler, implementation_handler, db
+from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
 import logging
-
-
-@app.route('/qiskit-service/api/v1.0/jobs(<int:job_id>', methods=['GET'])
-def get_job(job_id):
-    return None
+import json
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
@@ -55,10 +52,10 @@ def transpile_circuit():
     print("Depth: {}".format(depth))
     print("Width: {}".format(width))
 
-    # ibmq_handler.delete_token(token)
+    # ibmq_handler.delete_token()
 
     logging.info('Returning HTTP response to client...')
-    return jsonify({'depth': depth}, {'width': width})
+    return jsonify({'depth': depth}, {'width': width}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
@@ -74,20 +71,25 @@ def execute_circuit():
     input_params = request.json.get('input-params', "")
     shots = request.json.get('shots', "1024")
 
-    logging.info('Preparing implementation...')
-    circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-
-    backend = ibmq_handler.get_qpu(token, qpu_name)
-    logging.info('Start transpiling...')
-    transpiled_circuit = transpile(circuit, backend=backend)
-    print(transpiled_circuit)
-    print("Depth: {}".format(transpiled_circuit.depth()))
-    print("Width: {}".format(transpiled_circuit.width()))
-
-    logging.info('Start executing...')
-    ibmq_handler.execute_job(transpiled_circuit, shots, backend)
-
-    # ibmq_handler.delete_token(token)
+    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
+                                       input_params=input_params, shots=shots)
+    result = Result(id=job.get_id())
+    db.session.add(result)
+    db.session.commit()
 
     logging.info('Returning HTTP response to client...')
-    return jsonify({'create_qobj': 'worked'}) # return Object-ID of Job
+    content_location = '/qiskit-service/api/v1.0/results/'+result.id
+    response = jsonify({'content-location': content_location})
+    response.status_code = 202
+    response.headers['content-location'] = content_location
+    return response
+
+
+@app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])
+def get_result(result_id):
+    result = Result.query.get(result_id)
+    if result.complete:
+        result_dict = json.loads(result.result)
+        return jsonify({'id': result.id, 'status': 'ready', 'result': result_dict}), 303
+    else:
+        return jsonify({'id': result.id, 'status': 'not ready'}), 200

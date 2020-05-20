@@ -31,7 +31,7 @@ def get_qpu(token, qpu_name):
     return backend
 
 
-def delete_token(token):
+def delete_token():
     IBMQ.delete_account()
 
 
@@ -54,23 +54,32 @@ def execute_job(transpiled_circuit, shots, backend):
         job_status = job.status()
 
     try:
-        job_result = job.result() # It will block until the job finishes.
+        job_result = job.result()
         print("\nJob result:")
         print(job_result)
+        job_result_dict = job_result.to_dict()
+        print(job_result_dict)
         try:
+            statevector = job_result.get_statevector()
             print("\nState vector:")
-            print(job_result.get_statevector())
+            print(statevector)
         except QiskitError:
+            statevector = None
             print("No statevector available!")
         try:
+            counts = job_result.get_counts()
             print("\nCounts:")
-            print(job_result.get_counts())
+            print(counts)
         except QiskitError:
+            counts = None
             print("No counts available!")
         try:
+            unitary = job_result.get_unitary()
             print("\nUnitary:")
-            print(job_result.get_unitary())
+            print(unitary)
         except QiskitError:
+            unitary = None
             print("No unitary available!")
+        return {'job_result_raw': job_result_dict, 'statevector': statevector, 'counts': counts, 'unitary': unitary}
     except JobError as ex:
         print("Something wrong happened with the result!: {}".format(ex))
