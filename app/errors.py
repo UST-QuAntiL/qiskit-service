@@ -20,8 +20,9 @@
 from flask import make_response, jsonify
 from app import app
 
+
 @app.errorhandler(500)
-def not_found(error):
+def internal_server(error):
     return make_response(jsonify({'error': 'Internal Server Error', 'statusCode': '500'}), 500)
 
 

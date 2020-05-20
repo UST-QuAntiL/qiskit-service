@@ -19,41 +19,49 @@
 
 from qiskit import IBMQ, assemble, QiskitError
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
-from qiskit.providers import JobError
+from qiskit.providers.exceptions import JobError, JobTimeoutError
+from qiskit.providers.exceptions import QiskitBackendNotFoundError
+from qiskit.providers.ibmq.api.exceptions import RequestsApiError
 import json
+
+get_qpu_aborted = False
+execute_job_aborted = False
 
 
 def get_qpu(token, qpu_name):
-    IBMQ.save_account(token, overwrite=True)
-    IBMQ.load_account()
-    provider = IBMQ.get_provider(group='open')
-    backend = provider.get_backend(qpu_name)
-    return backend
+    """Load account from token. Get backend."""
+    global get_qpu_aborted
+    get_qpu_aborted = False
+    try:
+        IBMQ.save_account(token, overwrite=True)
+        IBMQ.load_account()
+        provider = IBMQ.get_provider(group='open')
+        backend = provider.get_backend(qpu_name)
+        return backend
+    except (QiskitBackendNotFoundError, RequestsApiError):
+        get_qpu_aborted = True
+        return None
 
 
 def delete_token():
+    """Delete account."""
     IBMQ.delete_account()
 
 
-def get_qObject_in_json(transpiled_circuit, qpu_name, shots):
-    qobj = assemble(transpiled_circuit, shots=shots)
-    qobj_dict = qobj.to_dict()
-    data_dict = {'qObject': qobj_dict, 'backend': {'name': qpu_name}}
-    data = json.dumps(data_dict)
-    return data
-
-
 def execute_job(transpiled_circuit, shots, backend):
-    qobj = assemble(transpiled_circuit, shots=shots)
-
-    job = backend.run(qobj)
-
-    job_status = job.status()
-    while job_status not in JOB_FINAL_STATES:
-        print("The job is still running")
-        job_status = job.status()
+    """Genereate qObject from transpiled circuit and execute it. Return result."""
+    global execute_job_aborted
+    execute_job_aborted = False
 
     try:
+        qobj = assemble(transpiled_circuit, shots=shots)
+        job = backend.run(qobj)
+
+        job_status = job.status()
+        while job_status not in JOB_FINAL_STATES:
+            print("The job is still running")
+            job_status = job.status()
+
         job_result = job.result()
         print("\nJob result:")
         print(job_result)
@@ -81,5 +89,6 @@ def execute_job(transpiled_circuit, shots, backend):
             unitary = None
             print("No unitary available!")
         return {'job_result_raw': job_result_dict, 'statevector': statevector, 'counts': counts, 'unitary': unitary}
-    except JobError as ex:
-        print("Something wrong happened with the result!: {}".format(ex))
+    except (JobError, JobTimeoutError):
+        execute_job_aborted = True
+        return None

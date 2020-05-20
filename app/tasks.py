@@ -19,6 +19,7 @@
 
 from app import implementation_handler, ibmq_handler, db
 from qiskit import transpile
+from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 from app.result_model import Result
 import logging
@@ -26,22 +27,37 @@ import json
 
 
 def execute(impl_url, input_params, token, qpu_name, shots):
+    """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
     result = Result.query.get(job.get_id())
     logging.info('Preparing implementation...')
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-
-    backend = ibmq_handler.get_qpu(token, qpu_name)
-    logging.info('Start transpiling...')
-    transpiled_circuit = transpile(circuit, backend=backend)
-    print(transpiled_circuit)
-    print("Depth: {}".format(transpiled_circuit.depth()))
-    print("Width: {}".format(transpiled_circuit.width()))
-
-    logging.info('Start executing...')
-    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
-    result.result = json.dumps(job_result)
-    result.complete = True
-    db.session.commit()
+    if not implementation_handler.is_aborted:
+        backend = ibmq_handler.get_qpu(token, qpu_name)
+        if not ibmq_handler.get_qpu_aborted:
+            logging.info('Start transpiling...')
+            try:
+                transpiled_circuit = transpile(circuit, backend=backend)
+                print(transpiled_circuit)
+                print("Depth: {}".format(transpiled_circuit.depth()))
+                print("Width: {}".format(transpiled_circuit.width()))
+                logging.info('Start executing...')
+                job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
+                if not ibmq_handler.execute_job_aborted:
+                    result.result = json.dumps(job_result)
+                    result.complete = True
+                    db.session.commit()
+                else:
+                    result.result = json.dumps({'error': 'execution failed'})
+                    db.session.commit()
+            except TranspilerError:
+                result.result = json.dumps({'error': 'too many qubits required'})
+                db.session.commit()
+        else:
+            result.result = json.dumps({'error': 'qpu-name or token wrong'})
+            db.session.commit()
+    else:
+        result.result = json.dumps({'error': 'URL not found'})
+        db.session.commit()
 
     # ibmq_handler.delete_token()

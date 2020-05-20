@@ -21,13 +21,15 @@ from app import app, ibmq_handler, implementation_handler, db
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
+from qiskit.transpiler.exceptions import TranspilerError
 import logging
 import json
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
 def transpile_circuit():
-    """Get implementation from URL. Pass input into implementation. Generate circuit and return depth and width."""
+    """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
+    and return depth and width."""
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
@@ -40,28 +42,35 @@ def transpile_circuit():
 
     logging.info('Preparing implementation...')
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-    print(circuit)
+    if not implementation_handler.is_aborted:
+        print(circuit)
 
-    backend = ibmq_handler.get_qpu(token, qpu_name)
-    logging.info('Start transpiling...')
-    transpiled_circuit = transpile(circuit, backend=backend)
-    print(transpiled_circuit)
+        backend = ibmq_handler.get_qpu(token, qpu_name)
+        if not ibmq_handler.get_qpu_aborted:
+            logging.info('Start transpiling...')
+            try:
+                transpiled_circuit = transpile(circuit, backend=backend)
+                print(transpiled_circuit)
 
-    depth = transpiled_circuit.depth()
-    width = transpiled_circuit.width()
-    print("Depth: {}".format(depth))
-    print("Width: {}".format(width))
-
-    # ibmq_handler.delete_token()
-
-    logging.info('Returning HTTP response to client...')
-    return jsonify({'depth': depth}, {'width': width}), 200
+                depth = transpiled_circuit.depth()
+                width = transpiled_circuit.width()
+                print("Depth: {}".format(depth))
+                print("Width: {}".format(width))
+            except TranspilerError:
+                return jsonify({'error': 'too many qubits required'}), 200
+        else:
+            # ibmq_handler.delete_token()
+            abort(404)
+        # ibmq_handler.delete_token()
+        logging.info('Returning HTTP response to client...')
+        return jsonify({'depth': depth}, {'width': width}), 200
+    else:
+        abort(404)
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
-    """Get implementation from URL. Pass input into implementation. Generate circuit. Run circuit on IBMQ.
-     Return content location with results."""
+    """Put execution job in queue. Return location of the later result."""
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
@@ -87,9 +96,12 @@ def execute_circuit():
 
 @app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])
 def get_result(result_id):
+    """Return result when it is available."""
     result = Result.query.get(result_id)
+    result_dict = json.loads(result.result)
+    response = jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict})
     if result.complete:
-        result_dict = json.loads(result.result)
-        return jsonify({'id': result.id, 'status': 'ready', 'result': result_dict}), 303
+        response.status_code = 303
     else:
-        return jsonify({'id': result.id, 'status': 'not ready'}), 200
+        response.status_code = 200
+    return response
