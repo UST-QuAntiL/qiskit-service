@@ -1,5 +1,8 @@
 # qiskit-service
 
+This service takes a Qiskit implementation via an URL and returns either its depth & width (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
+
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Setup
