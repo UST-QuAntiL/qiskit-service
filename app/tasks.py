@@ -41,7 +41,7 @@ def execute(impl_url, input_params, token, qpu_name, shots):
                 transpiled_circuit = transpile(circuit, backend=backend)
                 print(transpiled_circuit)
                 print("Depth: {}".format(transpiled_circuit.depth()))
-                print("Width: {}".format(transpiled_circuit.width()))
+                print("Width: {}".format(transpiled_circuit.num_qubits))
 
                 logging.info('Start executing...')
                 job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)

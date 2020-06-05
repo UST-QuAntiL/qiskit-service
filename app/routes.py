@@ -56,9 +56,8 @@ def transpile_circuit():
     try:
         transpiled_circuit = transpile(circuit, backend=backend)
         print(transpiled_circuit)
-
         depth = transpiled_circuit.depth()
-        width = transpiled_circuit.width()
+        width = transpiled_circuit.num_qubits   # transpiled_circuit.width() also counts number of classical bits
         print("Depth: {}".format(depth))
         print("Width: {}".format(width))
     except TranspilerError:
@@ -79,7 +78,7 @@ def execute_circuit():
     qpu_name = request.json['qpu-name']
     token = request.json['token']
     input_params = request.json.get('input-params', "")
-    shots = request.json.get('shots', "1024")
+    shots = request.json.get('shots', 1024)
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
                                        input_params=input_params, shots=shots)
