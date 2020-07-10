@@ -30,7 +30,7 @@ import json
 def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
-    
+
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
@@ -92,6 +92,7 @@ def execute_circuit():
     response = jsonify({'content-location': content_location})
     response.status_code = 202
     response.headers['content-location'] = content_location
+    response.headers['Location'] = content_location
     return response
 
 
