@@ -30,6 +30,7 @@ import json
 def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
+    
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
@@ -65,7 +66,7 @@ def transpile_circuit():
 
     # ibmq_handler.delete_token()
     logging.info('Returning HTTP response to client...')
-    return jsonify({'depth': depth}, {'width': width}), 200
+    return jsonify({'depth': depth, 'width': width}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
