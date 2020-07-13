@@ -89,9 +89,8 @@ def execute_circuit():
 
     logging.info('Returning HTTP response to client...')
     content_location = '/qiskit-service/api/v1.0/results/'+result.id
-    response = jsonify({'content-location': content_location})
+    response = jsonify({'Location': content_location})
     response.status_code = 202
-    response.headers['content-location'] = content_location
     response.headers['Location'] = content_location
     return response
 
