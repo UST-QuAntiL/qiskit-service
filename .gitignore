@@ -4,3 +4,4 @@ __pycache__
 app.db
 *.pyc
 *.pyo
+test/_trial_temp
