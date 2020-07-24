@@ -17,7 +17,7 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, ibmq_handler, implementation_handler, db
+from app import app, ibmq_handler, implementation_handler, db, parameters
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
@@ -39,6 +39,8 @@ def transpile_circuit():
     qpu_name = request.json['qpu-name']
     token = request.json['token']
     input_params = request.json.get('input-params', "")
+    input_params = parameters.ParameterDictionary(input_params)
+
     print(input_params)
 
     logging.info('Preparing implementation...')
@@ -104,3 +106,8 @@ def get_result(result_id):
         return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
+
+
+@app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
+def version():
+    return jsonify({'version': '1.0'})
