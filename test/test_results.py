@@ -5,7 +5,7 @@ from app import app, db
 from app.result_model import Result
 
 
-class RoutesTestCase(unittest.TestCase):
+class ResultsTestCase(unittest.TestCase):
 
     def setUp(self):
 
