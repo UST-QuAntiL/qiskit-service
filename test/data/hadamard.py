@@ -1,6 +1,6 @@
 import qiskit
 
-def get_circuit(kwargs):
+def get_circuit(**kwargs):
 
     reg = qiskit.QuantumRegister(1, "q")
     circuit = qiskit.QuantumCircuit(reg)
@@ -11,5 +11,5 @@ def get_circuit(kwargs):
 
 if __name__ == "__main__":
 
-    c = get_circuit(None)
+    c = get_circuit()
     print(c)
