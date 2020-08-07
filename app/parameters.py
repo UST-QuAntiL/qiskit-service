@@ -26,7 +26,8 @@ class ParameterDictionary(dict):
     __parameter_types = {
         "String" : str,
         "Integer" : int,
-        "Float" : float
+        "Float" : float,
+        "Unknown" : str
     }
 
     """

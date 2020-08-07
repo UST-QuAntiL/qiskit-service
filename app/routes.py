@@ -37,12 +37,11 @@ def transpile_circuit():
     impl_url = request.json['impl-url']
     print(impl_url)
     qpu_name = request.json['qpu-name']
-    token = request.json['token']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
 
     print(input_params)
-
+    token = input_params['token']
     logging.info('Preparing implementation...')
 
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
@@ -79,9 +78,11 @@ def execute_circuit():
         abort(400)
     impl_url = request.json['impl-url']
     qpu_name = request.json['qpu-name']
-    token = request.json['token']
     input_params = request.json.get('input-params', "")
+    input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
+
+    token = input_params['token']
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
                                        input_params=input_params, shots=shots)
