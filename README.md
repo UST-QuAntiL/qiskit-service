@@ -39,9 +39,24 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
     "qpu-name": "NAME-OF-QPU",
-    "input-params": {"PARAM-NAME-1": YOUR-VALUE-1, "PARAM-NAME-2": YOUR-VALUE-2, ...},
-    "token": "YOUR-TOKEN"
-}  
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+        "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+        "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+  
 ```
 
 ## Execution Request
@@ -52,8 +67,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
     "qpu-name": "NAME-OF-QPU",
-    "input-params": {"PARAM-NAME-1": YOUR-VALUE-1, "PARAM-NAME-2": YOUR-VALUE-2, ...},
-    "token": "YOUR-TOKEN"
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+        "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+        "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+    },
+    "token": "YOUR-IBMQ-TOKEN"
 }
 ```
 
