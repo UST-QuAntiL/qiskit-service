@@ -32,6 +32,7 @@ def execute(impl_url, input_params, token, qpu_name, shots):
     result = Result.query.get(job.get_id())
 
     logging.info('Preparing implementation...')
+    print(input_params)
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
     if circuit:
         backend = ibmq_handler.get_qpu(token, qpu_name)
@@ -39,9 +40,8 @@ def execute(impl_url, input_params, token, qpu_name, shots):
             logging.info('Start transpiling...')
             try:
                 transpiled_circuit = transpile(circuit, backend=backend)
-                print(transpiled_circuit)
-                print("Depth: {}".format(transpiled_circuit.depth()))
-                print("Width: {}".format(transpiled_circuit.num_qubits))
+                print("Circuit Depth: {}".format(transpiled_circuit.depth()))
+                print("Circuit Width: {}".format(transpiled_circuit.num_qubits))
 
                 logging.info('Start executing...')
                 job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)

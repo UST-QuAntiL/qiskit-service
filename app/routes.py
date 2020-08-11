@@ -17,7 +17,7 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, ibmq_handler, implementation_handler, db
+from app import app, ibmq_handler, implementation_handler, db, parameters
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
@@ -34,13 +34,15 @@ def transpile_circuit():
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
+    print(request.json)
     impl_url = request.json['impl-url']
     print(impl_url)
     qpu_name = request.json['qpu-name']
-    token = request.json['token']
     input_params = request.json.get('input-params', "")
-    print(input_params)
+    input_params = parameters.ParameterDictionary(input_params)
 
+    print(input_params)
+    token = input_params['token']
     logging.info('Preparing implementation...')
 
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
@@ -77,9 +79,11 @@ def execute_circuit():
         abort(400)
     impl_url = request.json['impl-url']
     qpu_name = request.json['qpu-name']
-    token = request.json['token']
     input_params = request.json.get('input-params', "")
+    input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
+
+    token = input_params['token']
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
                                        input_params=input_params, shots=shots)
@@ -104,3 +108,8 @@ def get_result(result_id):
         return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
+
+
+@app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
+def version():
+    return jsonify({'version': '1.0'})

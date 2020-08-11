@@ -2,5 +2,7 @@
 .DS_Store
 __pycache__
 app.db
+test.db
 *.pyc
 *.pyo
+test/_trial_temp
