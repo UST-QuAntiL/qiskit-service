@@ -34,6 +34,7 @@ def transpile_circuit():
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
+    print(request.json)
     impl_url = request.json['impl-url']
     print(impl_url)
     qpu_name = request.json['qpu-name']
