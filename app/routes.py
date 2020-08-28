@@ -45,10 +45,13 @@ def transpile_circuit():
     token = input_params['token']
     logging.info('Preparing implementation...')
 
-    circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-    if not circuit:
-        abort(404)
-    print(circuit)
+    try:
+        circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+        if not circuit:
+            abort(404)
+        print(circuit)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
     if not backend:

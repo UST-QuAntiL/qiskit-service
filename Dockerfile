@@ -15,6 +15,5 @@ ENV FLASK_APP=qiskit-service.py
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=0
 RUN echo "python -m flask db upgrade" > /app/startup.sh
-RUN echo "rq worker --url redis://redis qiskit-service_execute &" >> /app/startup.sh
 RUN echo "python -m flask run --host=0.0.0.0" >> /app/startup.sh
 CMD [ "sh", "/app/startup.sh" ]
