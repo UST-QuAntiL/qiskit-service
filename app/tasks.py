@@ -39,7 +39,7 @@ def execute(impl_url, input_params, token, qpu_name, shots):
         if backend:
             logging.info('Start transpiling...')
             try:
-                transpiled_circuit = transpile(circuit, backend=backend)
+                transpiled_circuit = transpile(circuit, backend=backend, optimization_level=1)
                 print("Circuit Depth: {}".format(transpiled_circuit.depth()))
                 print("Circuit Width: {}".format(transpiled_circuit.num_qubits))
 
