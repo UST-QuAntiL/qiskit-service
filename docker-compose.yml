@@ -31,6 +31,8 @@ services:
       - DATABASE_URL=sqlite:////data/app.db
     volumes:
       - exec_data:/data
+    depends_on:
+      - redis
     deploy:
       replicas: 4
 
@@ -44,4 +46,4 @@ services:
 
 networks:
   default:
-    driver: overlay
+    driver: bridge
