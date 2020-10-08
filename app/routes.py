@@ -21,6 +21,8 @@ from app import app, ibmq_handler, implementation_handler, db, parameters
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
+from qiskit.transpiler.passes import RemoveFinalMeasurements
+from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
 import logging
 import json
@@ -61,9 +63,14 @@ def transpile_circuit():
         abort(404)
 
     try:
-        transpiled_circuit = transpile(circuit, backend=backend)
+        transpiled_circuit = transpile(circuit, backend=backend, optimization_level=1)
+        remove_final_meas = RemoveFinalMeasurements()
+        active_qubits = [
+            qubit for qubit in transpiled_circuit.qubits if
+            qubit not in remove_final_meas.run(circuit_to_dag(transpiled_circuit)).idle_wires()
+        ]
+        width = len(active_qubits)
         depth = transpiled_circuit.depth()
-        width = transpiled_circuit.num_qubits   # transpiled_circuit.width() also counts number of classical bits
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
@@ -88,13 +95,13 @@ def execute_circuit():
     token = input_params['token']
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
-                                       input_params=input_params, shots=shots)
+                                    input_params=input_params, shots=shots)
     result = Result(id=job.get_id())
     db.session.add(result)
     db.session.commit()
 
     logging.info('Returning HTTP response to client...')
-    content_location = '/qiskit-service/api/v1.0/results/'+result.id
+    content_location = '/qiskit-service/api/v1.0/results/' + result.id
     response = jsonify({'Location': content_location})
     response.status_code = 202
     response.headers['Location'] = content_location
