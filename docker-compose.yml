@@ -12,6 +12,7 @@ services:
       - default
   qiskit-service:
     image: planqk/qiskit-service:latest
+    command: sh /app/startup.sh
     ports:
       - "5000:5000"
     environment:
