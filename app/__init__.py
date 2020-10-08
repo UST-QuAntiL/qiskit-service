@@ -24,6 +24,7 @@ from flask_migrate import Migrate
 from redis import Redis
 import rq
 from app import Config
+import logging
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -34,3 +35,4 @@ from app import routes, result_model, errors
 
 app.redis = Redis.from_url(app.config['REDIS_URL'])
 app.execute_queue = rq.Queue('qiskit-service_execute', connection=app.redis, default_timeout=3600)
+app.logger.setLevel(logging.INFO)
