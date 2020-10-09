@@ -8,8 +8,8 @@ This service takes a Qiskit implementation via an URL and returns either its dep
 ## Setup
 * Clone repository:
 ```
-git clone https://github.com/PlanQK/qiskit-service.git   
-git clone git@github.com:PlanQK/qiskit-service.git
+git clone https://github.com/UST-QuAntiL/qiskit-service.git 
+git clone git@github.com:UST-QuAntiL/qiskit-service.git
 ```
 
 * Start containers:
