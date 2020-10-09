@@ -26,6 +26,7 @@ from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
 import logging
 import json
+import re
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
@@ -36,29 +37,31 @@ def transpile_circuit():
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
             or not 'token' in request.json:
         abort(400)
-    print(request.json)
+
     impl_url = request.json['impl-url']
-    print(impl_url)
     qpu_name = request.json['qpu-name']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
-
-    print(input_params)
     token = input_params['token']
-    logging.info('Preparing implementation...')
 
-    circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-    if not circuit:
-        abort(404)
-    print("Original circuit:")
-    print(circuit)
+    short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
+
+    try:
+        circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+        if not circuit:
+            app.logger.warn(f"{short_impl_name} not found.")
+            abort(404)
+    except Exception as e:
+
+        app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
+        return jsonify({'error': str(e)}), 200
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
     if not backend:
         # ibmq_handler.delete_token()
+        app.logger.warn(f"{qpu_name} not found.")
         abort(404)
 
-    logging.info('Start transpiling...')
     try:
         transpiled_circuit = transpile(circuit, backend=backend, optimization_level=1)
         remove_final_meas = RemoveFinalMeasurements()
@@ -67,17 +70,13 @@ def transpile_circuit():
             qubit not in remove_final_meas.run(circuit_to_dag(transpiled_circuit)).idle_wires()
         ]
         width = len(active_qubits)
-        print("Transpiled circuit:")
-        print(transpiled_circuit)
         depth = transpiled_circuit.depth()
-        # width = transpiled_circuit.num_qubits   # transpiled_circuit.width() also counts number of classical bits
-        print("Depth: {}".format(depth))
-        print("Width: {}".format(width))
+
     except TranspilerError:
+        app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
         return jsonify({'error': 'too many qubits required'}), 200
 
-    # ibmq_handler.delete_token()
-    logging.info('Returning HTTP response to client...')
+    app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width} d={depth}")
     return jsonify({'depth': depth, 'width': width}), 200
 
 
