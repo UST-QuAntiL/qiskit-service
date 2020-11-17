@@ -21,6 +21,8 @@ from app import implementation_handler, ibmq_handler, db
 from qiskit import transpile
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
+
+from app.NumpyEncoder import NumpyEncoder
 from app.result_model import Result
 import logging
 import json
@@ -82,7 +84,12 @@ def calculate_calibration_matrix(token, qpu_name, shots):
         job_result = ibmq_handler.calculate_calibration_matrix(token, qpu_name, shots)
         if job_result:
             result = Result.query.get(job.get_id())
-            result.result = json.dumps(job_result)
+            result.result = json.dumps({'matrix': job_result.cal_matrix}, cls=NumpyEncoder)
+            result.complete = True
+            db.session.commit()
+        else:
+            result = Result.query.get(job.get_id())
+            result.result = json.dumps({'error': 'matrix calculation failed'})
             result.complete = True
             db.session.commit()
     else:
