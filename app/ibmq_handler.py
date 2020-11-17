@@ -16,9 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-import time
-import qiskit
-from qiskit import IBMQ, assemble, QiskitError
+from time import sleep
+
+from qiskit import IBMQ, assemble, QiskitError, QuantumRegister, execute
 from qiskit.ignis.mitigation import CompleteMeasFitter, complete_meas_cal
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
@@ -86,14 +86,14 @@ def execute_job(transpiled_circuit, shots, backend):
         return None
 
 
-def calculate_calibration_matrix(token, qpu_name, shots):
+def get_meas_fitter(token, qpu_name, shots):
     """Execute the calibration circuits on the given backend and calculate resulting matrix."""
     print("Starting calculation of calibration matrix for QPU: ", qpu_name)
 
     backend = get_qpu(token, qpu_name)
 
     # Generate a calibration circuit for each state
-    qr = qiskit.QuantumRegister(len(backend.properties().qubits))
+    qr = QuantumRegister(len(backend.properties().qubits))
     meas_calibs, state_labels = complete_meas_cal(qr=qr, circlabel='mcal')
 
     # Execute each calibration circuit and store results
@@ -110,11 +110,11 @@ def calculate_calibration_matrix(token, qpu_name, shots):
 
 def execute_calibration_circuit(circuit, shots, backend):
     """Execute a calibration circuit on the specified backend"""
-    job = qiskit.execute(circuit, backend=backend, shots=shots)
+    job = execute(circuit, backend=backend, shots=shots)
 
     job_status = job.status()
     while job_status not in JOB_FINAL_STATES:
         print('The execution is still running')
-        time.sleep(20)
+        sleep(20)
         job_status = job.status()
     return job.result()

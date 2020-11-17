@@ -81,7 +81,7 @@ def calculate_calibration_matrix(token, qpu_name, shots):
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
     if backend:
-        job_result = ibmq_handler.calculate_calibration_matrix(token, qpu_name, shots)
+        job_result = ibmq_handler.get_meas_fitter(token, qpu_name, shots)
         if job_result:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'matrix': job_result.cal_matrix}, cls=NumpyEncoder)
