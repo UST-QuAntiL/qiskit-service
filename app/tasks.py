@@ -71,3 +71,22 @@ def execute(impl_url, input_params, token, qpu_name, shots):
         db.session.commit()
 
     # ibmq_handler.delete_token()
+
+
+def calculate_calibration_matrix(token, qpu_name, shots):
+    """Calculate the current calibration matrix for the given QPU and save the result in db"""
+    job = get_current_job()
+
+    backend = ibmq_handler.get_qpu(token, qpu_name)
+    if backend:
+        job_result = ibmq_handler.calculate_calibration_matrix(token, qpu_name, shots)
+        if job_result:
+            result = Result.query.get(job.get_id())
+            result.result = json.dumps(job_result)
+            result.complete = True
+            db.session.commit()
+    else:
+        result = Result.query.get(job.get_id())
+        result.result = json.dumps({'error': 'qpu-name or token wrong'})
+        result.complete = True
+        db.session.commit()

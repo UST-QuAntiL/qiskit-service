@@ -16,8 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-
+import time
+import qiskit
 from qiskit import IBMQ, assemble, QiskitError
+from qiskit.ignis.mitigation import CompleteMeasFitter, complete_meas_cal
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
@@ -82,3 +84,37 @@ def execute_job(transpiled_circuit, shots, backend):
         return {'job_result_raw': job_result_dict, 'statevector': statevector, 'counts': counts, 'unitary': unitary}
     except (JobError, JobTimeoutError):
         return None
+
+
+def calculate_calibration_matrix(token, qpu_name, shots):
+    """Execute the calibration circuits on the given backend and calculate resulting matrix."""
+    print("Starting calculation of calibration matrix for QPU: ", qpu_name)
+
+    backend = get_qpu(token, qpu_name)
+
+    # Generate a calibration circuit for each state
+    qr = qiskit.QuantumRegister(len(backend.properties().qubits))
+    meas_calibs, state_labels = complete_meas_cal(qr=qr, circlabel='mcal')
+
+    # Execute each calibration circuit and store results
+    print('Executing ' + str(len(meas_calibs)) + ' circuits to create calibration matrix...')
+    cal_results = []
+    for circuit in meas_calibs:
+        print('Executing circuit ' + circuit.name)
+        cal_results.append(execute_calibration_circuit(circuit, shots, backend))
+
+    # Generate calibration matrix out of measurement results
+    meas_fitter = CompleteMeasFitter(cal_results, state_labels, circlabel='mcal')
+    return meas_fitter.filter
+
+
+def execute_calibration_circuit(circuit, shots, backend):
+    """Execute a calibration circuit on the specified backend"""
+    job = qiskit.execute(circuit, backend=backend, shots=shots)
+
+    job_status = job.status()
+    while job_status not in JOB_FINAL_STATES:
+        print('The execution is still running')
+        time.sleep(20)
+        job_status = job.status()
+    return job.result()
