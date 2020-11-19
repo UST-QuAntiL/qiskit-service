@@ -90,6 +90,20 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 
 Returns a content location for the result. Access it via `GET`.
 
+## Calibration Matrix Calculation Request
+Send QPU information, optional shots, and your IBM Quantum Experience token to the API to calculate the calibration matrix for the given QPU.
+
+`POST /qiskit-service/api/v1.0/calculate-calibration-matrix`
+```
+{
+    "qpu-name": "NAME-OF-QPU",
+    "token": "YOUR-IBMQ-TOKEN",
+    "shots": "NUMBER-OF-SHOTS"
+}
+```
+
+Returns a content location for the result. Access it via `GET`.
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).

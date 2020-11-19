@@ -108,6 +108,29 @@ def execute_circuit():
     return response
 
 
+@app.route('/qiskit-service/api/v1.0/calculate-calibration-matrix', methods=['POST'])
+def calculate_calibration_matrix():
+    """Put calibration matrix calculation job in queue. Return location of the later result."""
+    if not request.json or not 'qpu-name' in request.json or not 'token' in request.json:
+        abort(400)
+    qpu_name = request.json['qpu-name']
+    token = request.json['token']
+    shots = request.json.get('shots', 8192)
+
+    job = app.execute_queue.enqueue('app.tasks.calculate_calibration_matrix', qpu_name=qpu_name, token=token,
+                                    shots=shots)
+    result = Result(id=job.get_id())
+    db.session.add(result)
+    db.session.commit()
+
+    logging.info('Returning HTTP response to client...')
+    content_location = '/qiskit-service/api/v1.0/results/' + result.id
+    response = jsonify({'Location': content_location})
+    response.status_code = 202
+    response.headers['Location'] = content_location
+    return response
+
+
 @app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])
 def get_result(result_id):
     """Return result when it is available."""
