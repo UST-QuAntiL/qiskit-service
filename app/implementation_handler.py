@@ -21,20 +21,18 @@ from urllib import request, error
 import tempfile
 import os, sys, shutil
 from importlib import reload
+import qiskit
 
 
-def prepare_code_from_url(url, input_params):
-    """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
-    try:
-        impl = request.urlopen(url).read().decode("utf-8")
-    except (error.HTTPError, error.URLError):
-        return None
 
+
+def prepare_code_from_data(data, input_params):
+    """Get implementation code from data. Set input parameters into implementation. Return circuit."""
     temp_dir = tempfile.mkdtemp()
     with open(os.path.join(temp_dir, "__init__.py"), "w") as f:
         f.write("")
     with open(os.path.join(temp_dir, "downloaded_code.py"), "w") as f:
-        f.write(impl)
+        f.write(data)
     sys.path.append(temp_dir)
     try:
         import downloaded_code
@@ -46,3 +44,27 @@ def prepare_code_from_url(url, input_params):
         shutil.rmtree(temp_dir, ignore_errors=True)
     return circuit
 
+
+def prepare_code_from_url(url, input_params):
+    """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
+    try:
+        impl = request.urlopen(url).read().decode("utf-8")
+    except (error.HTTPError, error.URLError):
+        return None
+
+    circuit = prepare_code_from_data(impl, input_params)
+    return circuit
+
+
+def prepare_code_from_qasm(qasm):
+    return qiskit.QuantumCircuit.from_qasm_str(qasm)
+
+
+def prepare_code_from_qasm_url(url):
+    """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
+    try:
+        impl = request.urlopen(url).read().decode("utf-8")
+    except (error.HTTPError, error.URLError):
+        return None
+
+    return prepare_code_from_qasm(impl)

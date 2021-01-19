@@ -4,6 +4,7 @@ from app.config import basedir
 from app import app, db
 import qiskit
 import json
+import base64
 
 
 class TranspileTestCase(unittest.TestCase):
@@ -31,12 +32,13 @@ class TranspileTestCase(unittest.TestCase):
         self.assertTrue("version" in json_data)
         self.assertEqual(json_data['version'], "1.0")
 
-    def test_transpile_hadamard_simulator(self):
+    def test_transpile_hadamard_simulator_url(self):
 
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
-            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/feature/parameter-type/test/data/hadamard.py",
+            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/hadamard.py",
+            'impl-language': 'Qiskit',
             'qpu-name': "ibmq_qasm_simulator",
             'input-params': {},
             'token': token
@@ -44,8 +46,7 @@ class TranspileTestCase(unittest.TestCase):
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile',
-                                    data=json.dumps(request),
-                                    content_type="application/json")
+                                    json=request)
 
         self.assertEqual(response.status_code, 200)
         json_data = response.get_json()
@@ -54,11 +55,84 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
 
+    def test_transpile_hadamard_simulator_file(self):
+
+        # prepare the request
+        token = qiskit.IBMQ.stored_account()['token']
+        with open('data/hadamard.py', 'rb') as f:
+            impl_data = base64.b64encode(f.read()).decode()
+        request = {
+            'impl-data': impl_data,
+            'impl-language': 'Qiskit',
+            'qpu-name': "ibmq_qasm_simulator",
+            'input-params': {},
+            'token': token
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertEqual(json_data['depth'], 2)
+        self.assertEqual(json_data['width'], 1)
+
+    def test_transpile_shor_yorktown_url_qasm(self):
+
+        # prepare the request
+        token = qiskit.IBMQ.stored_account()['token']
+        request = {
+            'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
+            'impl-language': 'QASM',
+            'qpu-name': "ibmq_5_yorktown",
+            'input-params': {},
+            'token': token
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertEqual(json_data['depth'], 5)
+        self.assertEqual(json_data['width'], 3)
+
+    def test_transpile_shor_yorktown_file_qasm(self):
+
+        # prepare the request
+        token = qiskit.IBMQ.stored_account()['token']
+        with open('data/shor-fix-15.qasm', 'rb') as f:
+            impl_data = base64.b64encode(f.read()).decode()
+        request = {
+            'impl-data': impl_data,
+            'impl-language': 'QASM',
+            'qpu-name': "ibmq_5_yorktown",
+            'input-params': {},
+            'token': token
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertEqual(json_data['depth'], 5)
+        self.assertEqual(json_data['width'], 3)
+
     def test_transpile_shor_simulator(self):
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
-            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/feature/parameter-type/test/data/shor_general_qiskit.py",
+            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
             'qpu-name': "ibmq_qasm_simulator",
             'input-params': {
                 'N': {
@@ -71,14 +145,13 @@ class TranspileTestCase(unittest.TestCase):
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile',
-                                    data=json.dumps(request),
-                                    content_type="application/json")
+                                    json=request)
 
         self.assertEqual(response.status_code, 200)
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertEqual(json_data['depth'], 15829)
+        self.assertGreater(json_data['depth'], 3000)
         self.assertEqual(json_data['width'], 18)
 
     def test_transpile_shor_ibmq16(self):
@@ -86,7 +159,7 @@ class TranspileTestCase(unittest.TestCase):
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
-            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/feature/parameter-type/test/data/shor_general_qiskit.py",
+            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
             'qpu-name': "ibmq_16_melbourne",
             'input-params': {
                 'N': {
@@ -99,8 +172,7 @@ class TranspileTestCase(unittest.TestCase):
 
         # send the request
         response = self.client.post('/qiskit-service/api/v1.0/transpile',
-                                    data=json.dumps(request),
-                                    content_type="application/json")
+                                    json=request)
 
         self.assertEqual(response.status_code, 200)
         json_data = response.get_json()
