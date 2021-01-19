@@ -38,10 +38,15 @@ def prepare_code_from_data(data, input_params):
         import downloaded_code
 
         reload(downloaded_code)
-        circuit = downloaded_code.get_circuit(**input_params)
+        if 'get_circuit' in dir(downloaded_code):
+            circuit = downloaded_code.get_circuit(**input_params)
+        elif 'qc' in dir(downloaded_code):
+            circuit = downloaded_code.qc
     finally:
         sys.path.remove(temp_dir)
         shutil.rmtree(temp_dir, ignore_errors=True)
+    if not circuit:
+        raise ValueError
     return circuit
 
 

@@ -80,6 +80,31 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
 
+    def test_transpile_shor_yorktown_file(self):
+
+        # prepare the request
+        token = qiskit.IBMQ.stored_account()['token']
+        with open('data/shor-fix-15.py', 'rb') as f:
+            impl_data = base64.b64encode(f.read()).decode()
+        request = {
+            'impl-data': impl_data,
+            'impl-language': 'Qiskit',
+            'qpu-name': "ibmq_5_yorktown",
+            'input-params': {},
+            'token': token
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertEqual(json_data['depth'], 5)
+        self.assertEqual(json_data['width'], 3)
+
     def test_transpile_shor_yorktown_url_qasm(self):
 
         # prepare the request
@@ -102,6 +127,8 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertEqual(json_data['depth'], 5)
         self.assertEqual(json_data['width'], 3)
+        self.assertIn('transpiled_qasm', json_data)
+        self.assertIsNotNone(json_data.get('transpiled_qasm'))
 
     def test_transpile_shor_yorktown_file_qasm(self):
 

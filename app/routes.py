@@ -56,7 +56,10 @@ def transpile_circuit():
             circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
         else:
             short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
-            circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+            try:
+                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+            except ValueError:
+                abort(400)
 
     elif 'impl-data' in request.json:
         impl_data = base64.b64decode(request.json.get('impl-data').encode()).decode()
@@ -64,7 +67,10 @@ def transpile_circuit():
         if impl_language.lower() == 'qasm':
             circuit = implementation_handler.prepare_code_from_qasm(impl_data)
         else:
-            circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+            try:
+                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+            except ValueError:
+                abort(400)
     else:
         abort(400)
 
@@ -109,7 +115,7 @@ def transpile_circuit():
         return jsonify({'error': 'too many qubits required'}), 200
 
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width} d={depth}")
-    return jsonify({'depth': depth, 'width': width}), 200
+    return jsonify({'depth': depth, 'width': width, 'transpiled_qasm': transpiled_circuit.qasm()}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
@@ -123,8 +129,11 @@ def execute_circuit():
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
+    if 'token' in input_params:
+        token = input_params['token']
+    elif 'token' in request.json:
+        token = request.json.get('token')
 
-    token = input_params['token']
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
                                     input_params=input_params, shots=shots)
