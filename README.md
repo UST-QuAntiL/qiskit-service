@@ -34,12 +34,15 @@ docker-compose up
 ```
 
 ## Transpilation Request
-Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth and width of resulting circuit.
-
+Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth, width, and the transpiled qasm circuit of the resulting circuit.
+*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
 `POST /qiskit-service/api/v1.0/transpile`  
+
+#### Transpilation via URL
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"QASM"
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -54,20 +57,46 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
-        },
+        }
     },
     "token": "YOUR-IBMQ-TOKEN"
 }
-  
+```
+#### Transpilation via File
+```
+{  
+    "impl-data": "BASE64-ENCODED-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"QASM"
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
 ```
 
 ## Execution Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result.
+*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.
 
 `POST /qiskit-service/api/v1.0/execute`  
+#### Execution via URL
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"QASM"
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -82,7 +111,45 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+#### Execution via File
+```
+{  
+    "impl-data": "BASE64-ENCODED-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"QASM"
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
         },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+#### Execution via transpiled OpenQASM String
+```
+{  
+    "transpiled-qasm": "TRANSPILED-QASM-STRING",
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        }
     },
     "token": "YOUR-IBMQ-TOKEN"
 }
