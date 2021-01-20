@@ -62,7 +62,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             db.session.commit()
         logging.info('Start transpiling...')
         try:
-            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=1)
+            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
         except TranspilerError:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'too many qubits required'})
