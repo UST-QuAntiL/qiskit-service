@@ -55,6 +55,10 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
 
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
+
     def test_transpile_hadamard_simulator_file(self):
 
         # prepare the request
@@ -79,6 +83,10 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
+
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
 
     def test_transpile_shor_yorktown_file(self):
 
@@ -105,6 +113,10 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(json_data['depth'], 5)
         self.assertEqual(json_data['width'], 3)
 
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
+
     def test_transpile_shor_yorktown_url_qasm(self):
 
         # prepare the request
@@ -127,8 +139,12 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertEqual(json_data['depth'], 5)
         self.assertEqual(json_data['width'], 3)
-        self.assertIn('transpiled_qasm', json_data)
-        self.assertIsNotNone(json_data.get('transpiled_qasm'))
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
+
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
 
     def test_transpile_shor_yorktown_file_qasm(self):
 
@@ -155,6 +171,10 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(json_data['depth'], 5)
         self.assertEqual(json_data['width'], 3)
 
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
+
     def test_transpile_shor_simulator(self):
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
@@ -180,6 +200,10 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertGreater(json_data['depth'], 3000)
         self.assertEqual(json_data['width'], 18)
+
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
 
     def test_transpile_shor_ibmq16(self):
 

@@ -35,9 +35,7 @@ def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
 
-    if not request.json \
-            or not 'qpu-name' in request.json \
-            or not 'token' in request.json:
+    if not request.json or not 'qpu-name' in request.json:
         abort(400)
 
     qpu_name = request.json['qpu-name']
@@ -48,6 +46,8 @@ def transpile_circuit():
         token = input_params['token']
     elif 'token' in request.json:
         token = request.json.get('token')
+    else:
+        abort(400)
 
     if 'impl-url' in request.json:
         impl_url = request.json['impl-url']
@@ -115,17 +115,19 @@ def transpile_circuit():
         return jsonify({'error': 'too many qubits required'}), 200
 
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width} d={depth}")
-    return jsonify({'depth': depth, 'width': width, 'transpiled_qasm': transpiled_circuit.qasm()}), 200
+    return jsonify({'depth': depth, 'width': width, 'transpiled-qasm': transpiled_circuit.qasm()}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
     """Put execution job in queue. Return location of the later result."""
-    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
-            or not 'token' in request.json:
+    if not request.json or not 'qpu-name' in request.json:
         abort(400)
-    impl_url = request.json['impl-url']
     qpu_name = request.json['qpu-name']
+    impl_language = request.json.get('impl-language', '')
+    impl_url = request.json.get('impl-url')
+    impl_data = request.json.get('impl-data')
+    transpiled_qasm = request.json.get('transpiled-qasm')
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
@@ -133,10 +135,12 @@ def execute_circuit():
         token = input_params['token']
     elif 'token' in request.json:
         token = request.json.get('token')
+    else:
+        abort(400)
 
-
-    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
-                                    input_params=input_params, shots=shots)
+    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
+                                    impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
+                                    token=token, input_params=input_params, shots=shots)
     result = Result(id=job.get_id())
     db.session.add(result)
     db.session.commit()
