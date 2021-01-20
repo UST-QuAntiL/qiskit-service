@@ -41,6 +41,7 @@ def transpile_circuit():
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
+    impl_url = request.json.get('impl-url', "")
     input_params = parameters.ParameterDictionary(input_params)
     if 'token' in input_params:
         token = input_params['token']
@@ -49,7 +50,7 @@ def transpile_circuit():
     else:
         abort(400)
 
-    if 'impl-url' in request.json:
+    if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
         if impl_language.lower() == 'openqasm':
             short_impl_name = 'no name'
