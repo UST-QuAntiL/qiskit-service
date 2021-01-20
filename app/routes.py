@@ -27,6 +27,7 @@ from qiskit.transpiler.exceptions import TranspilerError
 import logging
 import json
 import re
+import base64
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
@@ -34,20 +35,55 @@ def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
 
-    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
-            or not 'token' in request.json:
+    if not request.json or not 'qpu-name' in request.json:
         abort(400)
 
-    impl_url = request.json['impl-url']
     qpu_name = request.json['qpu-name']
+    impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
-    token = input_params['token']
+    if 'token' in input_params:
+        token = input_params['token']
+    elif 'token' in request.json:
+        token = request.json.get('token')
+    else:
+        abort(400)
 
-    short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
+    if 'impl-url' in request.json:
+        impl_url = request.json['impl-url']
+        if impl_language.lower() == 'qasm':
+            short_impl_name = 'no name'
+            circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
+        else:
+            short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
+            try:
+                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+            except ValueError:
+                abort(400)
+
+    elif 'impl-data' in request.json:
+        impl_data = base64.b64decode(request.json.get('impl-data').encode()).decode()
+        short_impl_name = 'no short name'
+        if impl_language.lower() == 'qasm':
+            circuit = implementation_handler.prepare_code_from_qasm(impl_data)
+        else:
+            try:
+                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+            except ValueError:
+                abort(400)
+    else:
+        abort(400)
 
     try:
-        circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+        print(circuit)
+        remove_final_meas = RemoveFinalMeasurements()
+        active_qubits = [
+            qubit for qubit in circuit.qubits if
+            qubit not in remove_final_meas.run(circuit_to_dag(circuit)).idle_wires()
+        ]
+        non_transpiled_width = len(active_qubits)
+        non_transpiled_depth = circuit.depth()
+        print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
             app.logger.warn(f"{short_impl_name} not found.")
             abort(404)
@@ -63,7 +99,7 @@ def transpile_circuit():
         abort(404)
 
     try:
-        transpiled_circuit = transpile(circuit, backend=backend, optimization_level=1)
+        transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
         remove_final_meas = RemoveFinalMeasurements()
         active_qubits = [
             qubit for qubit in transpiled_circuit.qubits if
@@ -71,31 +107,40 @@ def transpile_circuit():
         ]
         width = len(active_qubits)
         depth = transpiled_circuit.depth()
+        print(f"Transpiled width {width} & transpiled depth {depth}")
+
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
         return jsonify({'error': 'too many qubits required'}), 200
 
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width} d={depth}")
-    return jsonify({'depth': depth, 'width': width}), 200
+    return jsonify({'depth': depth, 'width': width, 'transpiled-qasm': transpiled_circuit.qasm()}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
     """Put execution job in queue. Return location of the later result."""
-    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json \
-            or not 'token' in request.json:
+    if not request.json or not 'qpu-name' in request.json:
         abort(400)
-    impl_url = request.json['impl-url']
     qpu_name = request.json['qpu-name']
+    impl_language = request.json.get('impl-language', '')
+    impl_url = request.json.get('impl-url')
+    impl_data = request.json.get('impl-data')
+    transpiled_qasm = request.json.get('transpiled-qasm')
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
+    if 'token' in input_params:
+        token = input_params['token']
+    elif 'token' in request.json:
+        token = request.json.get('token')
+    else:
+        abort(400)
 
-    token = input_params['token']
-
-    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name, token=token,
-                                    input_params=input_params, shots=shots)
+    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
+                                    impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
+                                    token=token, input_params=input_params, shots=shots)
     result = Result(id=job.get_id())
     db.session.add(result)
     db.session.commit()
