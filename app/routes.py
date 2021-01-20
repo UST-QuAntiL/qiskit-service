@@ -55,7 +55,7 @@ def transpile_circuit():
             short_impl_name = 'no name'
             circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
         else:
-            short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
+            short_impl_name = "untitled"
             try:
                 circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
             except ValueError:
