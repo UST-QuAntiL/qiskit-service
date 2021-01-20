@@ -42,7 +42,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"QASM"
+    "impl-language": "Qiskit"/"OpenQASM"
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -66,7 +66,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 ```
 {  
     "impl-data": "BASE64-ENCODED-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"QASM"
+    "impl-language": "Qiskit"/"OpenQASM"
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -96,7 +96,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"QASM"
+    "impl-language": "Qiskit"/"OpenQASM"
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -120,7 +120,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 ```
 {  
     "impl-data": "BASE64-ENCODED-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"QASM"
+    "impl-language": "Qiskit"/"OpenQASM"
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {

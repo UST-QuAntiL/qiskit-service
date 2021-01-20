@@ -51,7 +51,7 @@ def transpile_circuit():
 
     if 'impl-url' in request.json:
         impl_url = request.json['impl-url']
-        if impl_language.lower() == 'qasm':
+        if impl_language.lower() == 'openqasm':
             short_impl_name = 'no name'
             circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
         else:
@@ -64,7 +64,7 @@ def transpile_circuit():
     elif 'impl-data' in request.json:
         impl_data = base64.b64decode(request.json.get('impl-data').encode()).decode()
         short_impl_name = 'no short name'
-        if impl_language.lower() == 'qasm':
+        if impl_language.lower() == 'openqasm':
             circuit = implementation_handler.prepare_code_from_qasm(impl_data)
         else:
             try:

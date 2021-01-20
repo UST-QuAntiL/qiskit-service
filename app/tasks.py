@@ -45,13 +45,13 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
     else:
         if impl_url:
-            if impl_language.lower() == 'qasm':
+            if impl_language.lower() == 'openqasm':
                 circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
             else:
                 circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
         elif impl_data:
             impl_data = base64.b64decode(impl_data.encode()).decode()
-            if impl_language.lower() == 'qasm':
+            if impl_language.lower() == 'openqasm':
                 circuit = implementation_handler.prepare_code_from_qasm(impl_data)
             else:
                 circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)

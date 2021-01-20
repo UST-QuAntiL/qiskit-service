@@ -123,7 +123,7 @@ class TranspileTestCase(unittest.TestCase):
         token = qiskit.IBMQ.stored_account()['token']
         request = {
             'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
-            'impl-language': 'QASM',
+            'impl-language': 'OpenQASM',
             'qpu-name': "ibmq_5_yorktown",
             'input-params': {},
             'token': token
@@ -154,7 +154,7 @@ class TranspileTestCase(unittest.TestCase):
             impl_data = base64.b64encode(f.read()).decode()
         request = {
             'impl-data': impl_data,
-            'impl-language': 'QASM',
+            'impl-language': 'OpenQASM',
             'qpu-name': "ibmq_5_yorktown",
             'input-params': {},
             'token': token
