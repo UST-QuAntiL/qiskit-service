@@ -1,6 +1,6 @@
 # qiskit-service
 
-This service takes a Qiskit or OpenQASM implementation via an URL or file and returns either its depth, width and the transpiled OpenQASM String (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
+This service takes a Qiskit or OpenQASM implementation as data or via an URL and returns either its depth, width and the transpiled OpenQASM String (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -34,7 +34,7 @@ docker-compose up
 ```
 
 ## Transpilation Request
-Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth, width of the transpiled circuit and the transpiled OpenQASM circuit itself.
+Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
 `POST /qiskit-service/api/v1.0/transpile`  
 
@@ -42,7 +42,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"OpenQASM"
+    "impl-language": "Qiskit"/"OpenQASM",
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -62,11 +62,11 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
-#### Transpilation via File
+#### Transpilation via data
 ```
 {  
     "impl-data": "BASE64-ENCODED-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"OpenQASM"
+    "impl-language": "Qiskit"/"OpenQASM",
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -96,7 +96,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"OpenQASM"
+    "impl-language": "Qiskit"/"OpenQASM",
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
@@ -116,11 +116,11 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
-#### Execution via File
+#### Execution via data
 ```
 {  
     "impl-data": "BASE64-ENCODED-IMPLEMENTATION",
-    "impl-language": "Qiskit"/"OpenQASM"
+    "impl-language": "Qiskit"/"OpenQASM",
     "qpu-name": "NAME-OF-QPU",
     "input-params": {
         "PARAM-NAME-1": {
