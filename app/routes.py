@@ -16,11 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+from qiskit.circuit.random import random_circuit
 
-from app import app, ibmq_handler, implementation_handler, db, parameters
+from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters
 from app.result_model import Result
 from flask import jsonify, abort, request
-from qiskit import transpile
+from qiskit import transpile, IBMQ
 from qiskit.transpiler.passes import RemoveFinalMeasurements
 from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
@@ -175,6 +176,22 @@ def calculate_calibration_matrix():
     response.status_code = 202
     response.headers['Location'] = content_location
     return response
+
+
+@app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
+def randomize():
+    if not request.json:
+        abort(400)
+
+    qpu_name = request.json['qpu-name']
+    num_of_qubits = request.json['number_of_qubits']
+    depth_of_circuit = request.json['depth_of_circuit']
+    num_of_circuits = request.json['num_of_circuits']
+    token = request.json['token']
+
+    locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, depth_of_circuit=depth_of_circuit, num_of_circuits=num_of_circuits, token=token)
+
+    return locations
 
 
 @app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])
