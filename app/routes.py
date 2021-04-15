@@ -19,6 +19,7 @@
 from qiskit.circuit.random import random_circuit
 
 from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters
+from app.benchmark_model import Benchmark
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile, IBMQ
@@ -203,6 +204,19 @@ def get_result(result_id):
         return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
+
+
+@app.route('/qiskit-service/api/v1.0/benchmarks/<result_id>', methods=['GET'])
+def get_benchmark(result_id):
+    """Return result when it is available."""
+    benchmark = Benchmark.query.get(result_id)
+    if benchmark.complete:
+        return jsonify({'id': benchmark.id, 'backend': benchmark.backend, 'counts': benchmark.counts,
+                        'original_depth': benchmark.original_depth, 'original_width': benchmark.original_width,
+                        'transpiled_depth': benchmark.transpiled_depth, 'transpiled_width': benchmark.transpiled_width,
+                        'complete': benchmark.complete}), 200
+    else:
+        return jsonify({'id': benchmark.id, 'complete': benchmark.complete}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
