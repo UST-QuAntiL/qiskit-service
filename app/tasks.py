@@ -23,6 +23,7 @@ from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 
 from app.NumpyEncoder import NumpyEncoder
+from app.benchmark_model import Benchmark
 from app.result_model import Result
 import logging
 import json
@@ -80,6 +81,52 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'execution failed'})
         result.complete = True
+        db.session.commit()
+
+    # ibmq_handler.delete_token()
+
+
+def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
+    """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
+    job = get_current_job()
+
+    backend = ibmq_handler.get_qpu(token, qpu_name)
+    if not backend:
+        result = Result.query.get(job.get_id())
+        result.result = json.dumps({'error': 'qpu-name or token wrong'})
+        result.complete = True
+        db.session.commit()
+
+    logging.info('Preparing implementation...')
+    transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
+
+    logging.info('Start executing...')
+    print('AYAY')
+    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
+    if job_result:
+        result = Result.query.get(job.get_id())
+        print('HELLO')
+        print(result)
+        print('BYE')
+        result.result = json.dumps(job_result)
+        print(result.result)
+        result.complete = True
+
+        benchmark = Benchmark.query.get(job.get_id())
+        benchmark.backend = json.dumps(qpu_name)
+        benchmark.result = json.dumps(job_result)
+        benchmark.counts = json.dumps(job_result.get_counts())
+        benchmark.complete = True
+
+        db.session.commit()
+    else:
+        result = Result.query.get(job.get_id())
+        result.result = json.dumps({'error': 'execution failed'})
+        result.complete = True
+
+        benchmark = Benchmark.query.get(job.get_id())
+        benchmark.complete = True
+
         db.session.commit()
 
     # ibmq_handler.delete_token()
