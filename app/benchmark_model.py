@@ -22,7 +22,7 @@ from app import db
 
 class Benchmark(db.Model):
     id = db.Column(db.String(36), primary_key=True)
-    #benchmark_id = db.Column(db.Integer)
+    benchmark_id = db.Column(db.Integer)
     backend = db.Column(db.String(1200), default="")
     result = db.Column(db.String(1200), default="")
     counts = db.Column(db.String(1200), default="")

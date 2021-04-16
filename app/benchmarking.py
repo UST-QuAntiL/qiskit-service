@@ -11,6 +11,7 @@ from app.result_model import Result
 
 def run(circuit, backend, token, original_depth, original_width, transpiled_depth, transpiled_width):
     qasm = circuit.qasm()
+    rowcount = db.session.query(Benchmark).count()
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
                                     shots=1024)
 
@@ -22,7 +23,7 @@ def run(circuit, backend, token, original_depth, original_width, transpiled_dept
     benchmark.original_width = original_width
     benchmark.transpiled_depth = transpiled_depth
     benchmark.transpiled_width = transpiled_width
-    #benchmark.benchmark_id = benchmark_id
+    benchmark.benchmark_id = rowcount//2
     db.session.commit()
 
     content_location = 'qiskit-service/api/v1.0/results/' + result.id

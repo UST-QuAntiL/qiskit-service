@@ -211,10 +211,10 @@ def get_benchmark(result_id):
     """Return result when it is available."""
     benchmark = Benchmark.query.get(result_id)
     if benchmark.complete:
-        return jsonify({'id': benchmark.id, 'backend': benchmark.backend, 'counts': benchmark.counts,
+        return jsonify({'id': benchmark.id, 'backend': benchmark.backend, 'counts': json.loads(benchmark.counts),
                         'original_depth': benchmark.original_depth, 'original_width': benchmark.original_width,
                         'transpiled_depth': benchmark.transpiled_depth, 'transpiled_width': benchmark.transpiled_width,
-                        'complete': benchmark.complete}), 200
+                        'benchmark_id': benchmark.benchmark_id, 'complete': benchmark.complete}), 200
     else:
         return jsonify({'id': benchmark.id, 'complete': benchmark.complete}), 200
 
