@@ -1,17 +1,24 @@
-# Run environment as dev
+# Run environment as Dev
 
-## Packages
+Either run the qiskit-service via docker containers or install the requirements locally.
+
+## Setup via Docker
+* Update container after implementation changes:
+```
+docker build -t planqk/qiskit-service:latest .
+```
+
+* Start containers:
+```
+docker-compose up
+```
+## Local Setup
+
+### Python Packages
 Install packages as listed in [requirements.txt](https://github.com/PlanQK/qiskit-service/blob/master/requirements.txt).
 Python 3.7 required.
 
-## Queueing
-* Start redis Docker:
-`docker run -p 6379:6379 redis`
-
-* Start worker:
-`rq worker qiskit-service_execute`
-
-## Database
+### Database
 * Install SQLite DB, f.e. as described [here](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-iv-database)
 
 * Setup results table with the following commands:
@@ -27,3 +34,10 @@ from app import db
 from app.result_model import Result
 Result.query.all()
 ```
+
+### Queueing
+* Start redis Docker:
+`docker run -p 6379:6379 redis`
+
+* Start worker:
+`rq worker qiskit-service_execute`

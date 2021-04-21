@@ -110,7 +110,7 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertEqual(json_data['depth'], 5)
+        self.assertLessEqual(json_data['depth'], 8)
         self.assertEqual(json_data['width'], 3)
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
@@ -137,7 +137,7 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertEqual(json_data['depth'], 5)
+        self.assertLessEqual(json_data['depth'], 8)
         self.assertEqual(json_data['width'], 3)
         self.assertIn('transpiled-qasm', json_data)
         self.assertIsNotNone(json_data.get('transpiled-qasm'))
@@ -168,7 +168,7 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertEqual(json_data['depth'], 5)
+        self.assertLessEqual(json_data['depth'], 8)
         self.assertEqual(json_data['width'], 3)
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
