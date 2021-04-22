@@ -188,9 +188,11 @@ def randomize():
     num_of_qubits = request.json['number_of_qubits']
     depth_of_circuit = request.json['depth_of_circuit']
     num_of_circuits = request.json['num_of_circuits']
+    shots = request.json.get('shots', 1024)
     token = request.json['token']
 
-    locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, depth_of_circuit=depth_of_circuit, num_of_circuits=num_of_circuits, token=token)
+    locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
+                                       depth_of_circuit=depth_of_circuit, num_of_circuits=num_of_circuits, token=token)
 
     return locations
 
@@ -206,17 +208,66 @@ def get_result(result_id):
         return jsonify({'id': result.id, 'complete': result.complete}), 200
 
 
-@app.route('/qiskit-service/api/v1.0/benchmarks/<result_id>', methods=['GET'])
-def get_benchmark(result_id):
-    """Return result when it is available."""
-    benchmark = Benchmark.query.get(result_id)
-    if benchmark.complete:
-        return jsonify({'id': benchmark.id, 'backend': benchmark.backend, 'counts': json.loads(benchmark.counts),
-                        'original_depth': benchmark.original_depth, 'original_width': benchmark.original_width,
-                        'transpiled_depth': benchmark.transpiled_depth, 'transpiled_width': benchmark.transpiled_width,
-                        'benchmark_id': benchmark.benchmark_id, 'complete': benchmark.complete}), 200
+@app.route('/qiskit-service/api/v1.0/benchmarks/<benchmark_id>', methods=['GET'])
+def get_benchmark(benchmark_id):
+    benchmark_sim = None
+    benchmark_real = None
+    for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
+        if json.loads(benchmark.backend) == 'ibmq_qasm_simulator':
+            benchmark_sim = benchmark
+        else:
+            benchmark_real = benchmark
+    if (benchmark_sim is not None) and (benchmark_real is not None):
+        if benchmark_sim.complete and benchmark_real.complete:
+            return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
+                             'counts': json.loads(benchmark_sim.counts),
+                             'original_depth': benchmark_sim.original_depth,
+                             'original_width': benchmark_sim.original_width,
+                             'transpiled_depth': benchmark_sim.transpiled_depth,
+                             'transpiled_width': benchmark_sim.transpiled_width,
+                             'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                             'shots': benchmark_sim.shots
+                             },
+                            {'id': benchmark_real.id, 'backend': json.loads(benchmark_real.backend),
+                             'counts': json.loads(benchmark_real.counts),
+                             'original_depth': benchmark_real.original_depth,
+                             'original_width': benchmark_real.original_width,
+                             'transpiled_depth': benchmark_real.transpiled_depth,
+                             'transpiled_width': benchmark_real.transpiled_width,
+                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'shots': benchmark_real.shots
+                             }]), 200
+        elif benchmark_sim.complete and not benchmark_real.complete:
+            return jsonify(
+                [{'id': benchmark_sim.id, 'backend': benchmark_sim.backend, 'counts': json.loads(benchmark_sim.counts),
+                  'original_depth': benchmark_sim.original_depth, 'original_width': benchmark_sim.original_width,
+                  'transpiled_depth': benchmark_sim.transpiled_depth,
+                  'transpiled_width': benchmark_sim.transpiled_width,
+                  'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                  'shots': benchmark_sim.shots
+                  },
+                 {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
+        elif not benchmark_sim.complete and benchmark_real.complete:
+            return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
+                            {'id': benchmark_real.id, 'backend': benchmark_real.backend,
+                             'counts': json.loads(benchmark_real.counts),
+                             'original_depth': benchmark_real.original_depth,
+                             'original_width': benchmark_real.original_width,
+                             'transpiled_depth': benchmark_real.transpiled_depth,
+                             'transpiled_width': benchmark_real.transpiled_width,
+                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'shots': benchmark_real.shots
+                             }]), 200
+        else:
+            return jsonify([{'id': benchmark.id, 'complete': benchmark.complete},
+                            {'id': benchmark.id, 'complete': benchmark.complete}]), 200
     else:
-        return jsonify({'id': benchmark.id, 'complete': benchmark.complete}), 200
+        abort(404)
+
+
+@app.route('/qiskit-service/api/v1.0/analysis', methods=['GET'])
+def get_analysis():
+    return benchmarking.analyse()
 
 
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])

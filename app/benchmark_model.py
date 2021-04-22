@@ -26,6 +26,7 @@ class Benchmark(db.Model):
     backend = db.Column(db.String(1200), default="")
     result = db.Column(db.String(1200), default="")
     counts = db.Column(db.String(1200), default="")
+    shots = db.Column(db.Integer)
     original_depth = db.Column(db.Integer)
     original_width = db.Column(db.Integer)
     transpiled_depth = db.Column(db.Integer)
