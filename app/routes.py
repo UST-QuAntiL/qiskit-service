@@ -186,13 +186,16 @@ def randomize():
 
     qpu_name = request.json['qpu-name']
     num_of_qubits = request.json['number_of_qubits']
-    depth_of_circuit = request.json['depth_of_circuit']
-    num_of_circuits = request.json['num_of_circuits']
+    min_depth_of_circuit = request.json['min_depth_of_circuit']
+    max_depth_of_circuit = request.json['max_depth_of_circuit']
+    num_of_circuits = request.json['number_of_circuits']
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 
     locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
-                                       depth_of_circuit=depth_of_circuit, num_of_circuits=num_of_circuits, token=token)
+                                       min_depth_of_circuit=min_depth_of_circuit,
+                                       max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
+                                       token=token)
 
     return locations
 
@@ -267,7 +270,7 @@ def get_benchmark(benchmark_id):
 
 @app.route('/qiskit-service/api/v1.0/analysis', methods=['GET'])
 def get_analysis():
-    return benchmarking.analyse()
+    return jsonify(benchmarking.analyse())
 
 
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])

@@ -34,13 +34,13 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     return content_location
 
 
-def randomize(qpu_name, num_of_qubits, shots, depth_of_circuit, num_of_circuits, token):
+def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of_circuit, num_of_circuits, token):
     sim_name = 'ibmq_qasm_simulator'
     backend_sim = ibmq_handler.get_qpu(token, sim_name)
     backend_real = ibmq_handler.get_qpu(token, qpu_name)
     locations = ''
 
-    for i in range(1, depth_of_circuit + 1):
+    for i in range(min_depth_of_circuit, max_depth_of_circuit + 1):
         for j in range(num_of_circuits):
             rowcount = db.session.query(Benchmark).count()
             benchmark_id = rowcount // 2
