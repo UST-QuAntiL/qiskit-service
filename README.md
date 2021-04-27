@@ -171,6 +171,28 @@ Send QPU information, optional shots, and your IBM Quantum Experience token to t
 
 Returns a content location for the result. Access it via `GET`.
 
+## Benchmark Request
+Send QPU information, the width and depth of the circuit, the number of circuits you want to create, the number of shots
+and your IBM Quantum Experience token to the API to get the result on the IBM Quantum Simulator and the stated QPU.
+
+`POST /qiskit-service/api/v1.0/randomize`
+
+```
+{  
+    "qpu-name": "NAME-OF-QPU",
+    "number_of_qubits": "NUMBER-OF-QUBITS",
+    "min_depth_of_circuit": "MIN-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
+    "max_depth_of_circuit": "MAX-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
+    "number_of_circuits": "NUMBER-OF-CIRCUITS",
+    "shots": "NUMBER-OF-SHOTS"
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+
+Returns a list of links to the results on both backends and a link to the benchmark result which returns corresponding
+executions on simulator and real quantum computer.
+Access those via `GET /qiskit-service/api/v1.0/benchmarks/<benchmark_id>`.`
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).
