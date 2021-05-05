@@ -76,13 +76,6 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         result = Result.query.get(job.get_id())
         result.result = json.dumps(job_result)
         result.complete = True
-
-        benchmark = Benchmark.query.get(job.get_id())
-        benchmark.backend = json.dumps(qpu_name)
-        benchmark.result = json.dumps(job_result)
-        benchmark.counts = json.dumps(job_result['counts'])
-        benchmark.complete = True
-
         db.session.commit()
     else:
         result = Result.query.get(job.get_id())
