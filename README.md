@@ -189,6 +189,9 @@ and your IBM Quantum Experience token to the API to get the result on the IBM Qu
 }
 ```
 
+Please make sure that ```number_of_qubits```, ```number_of_circuits``` and ```min_depth_of_circuit``` are greater than 0.
+Also, ```max_depth_of_cicuit``` has to be greater than ```min_depth_of_circuit```.
+
 Returns a list of links to the results on both backends and a link to the benchmark result which returns corresponding
 executions on simulator and real quantum computer.
 Access those via `GET /qiskit-service/api/v1.0/benchmarks/<benchmark_id>`.`
