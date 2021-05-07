@@ -18,9 +18,17 @@ docker-compose up
 Install packages as listed in [requirements.txt](https://github.com/PlanQK/qiskit-service/blob/master/requirements.txt).
 Python 3.7 required.
 
+### IBMQ Account
+Save your IBMQ token to disk with
+```
+python
+import qiskit
+qiskit.IBMQ.save_account(TOKEN)
+```
+
 ### Database
 * Install SQLite DB, f.e. as described [here](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-iv-database)
-
+* create a `data` folder in the `app` folder
 * Setup results table with the following commands:
 ```
 flask db migrate -m "results table"
