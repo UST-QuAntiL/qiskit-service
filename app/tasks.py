@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import datetime
 
 from app import implementation_handler, ibmq_handler, db
 from qiskit import transpile, QuantumCircuit
@@ -73,7 +74,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
     job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result)
+        result.result = json.dumps(job_result, default=convertInSuitableFormat)
         result.complete = True
         db.session.commit()
     else:
@@ -83,6 +84,12 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         db.session.commit()
 
     # ibmq_handler.delete_token()
+
+
+def convertInSuitableFormat(object):
+    """Enables the serialization of the unserializable datetime.datetime format"""
+    if isinstance(object, datetime.datetime):
+        return object.__str__()
 
 
 def calculate_calibration_matrix(token, qpu_name, shots):

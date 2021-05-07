@@ -20,19 +20,6 @@ docker-compose up
 
 Now the qiskit-service is available on http://localhost:5000/.
 
-## After implementation changes
-* Update container:
-```
-docker build -t planqk/qiskit-service:latest .
-docker push planqk/qiskit-service:latest
-```
-
-* Start containers:
-```
-docker-compose pull
-docker-compose up
-```
-
 ## Transpilation Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
