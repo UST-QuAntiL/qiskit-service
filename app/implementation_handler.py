@@ -37,6 +37,12 @@ def prepare_code_from_data(data, input_params):
     try:
         import downloaded_code
 
+        # deletes every attribute from downloaded_code, except __name__, because importlib.reload
+        # doesn't reset the module's global variables
+        for attr in dir(downloaded_code):
+            if attr != "__name__":
+                delattr(downloaded_code, attr)
+
         reload(downloaded_code)
         if 'get_circuit' in dir(downloaded_code):
             circuit = downloaded_code.get_circuit(**input_params)
