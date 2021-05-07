@@ -222,6 +222,8 @@ def get_benchmark(benchmark_id):
             benchmark_real = benchmark
     if (benchmark_sim is not None) and (benchmark_real is not None):
         if benchmark_sim.complete and benchmark_real.complete:
+            if benchmark_sim.result == "" or benchmark_real.result == "":
+                return json.dumps({'error': 'execution failed'})
             return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
                              'counts': json.loads(benchmark_sim.counts),
                              'original_depth': benchmark_sim.original_depth,
@@ -241,6 +243,8 @@ def get_benchmark(benchmark_id):
                              'shots': benchmark_real.shots
                              }]), 200
         elif benchmark_sim.complete and not benchmark_real.complete:
+            if benchmark_sim.result == "":
+                return json.dumps({'error': 'execution failed'})
             return jsonify(
                 [{'id': benchmark_sim.id, 'backend': benchmark_sim.backend, 'counts': json.loads(benchmark_sim.counts),
                   'original_depth': benchmark_sim.original_depth, 'original_width': benchmark_sim.original_width,
@@ -251,6 +255,8 @@ def get_benchmark(benchmark_id):
                   },
                  {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
         elif not benchmark_sim.complete and benchmark_real.complete:
+            if benchmark_real.result == "":
+                return json.dumps({'error': 'execution failed'})
             return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
                             {'id': benchmark_real.id, 'backend': benchmark_real.backend,
                              'counts': json.loads(benchmark_real.counts),

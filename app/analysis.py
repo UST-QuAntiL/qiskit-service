@@ -38,6 +38,17 @@ def calc_intersection(counts_sim, counts_real, shots):
     return intersection / shots
 
 
+def calc_chi_square_coefficient(counts_sim, counts_real):
+    coefficient = 0
+    for key in counts_real.keys():
+        if key not in counts_sim.keys():
+            counts_sim[key] = 0
+    for key in counts_sim.keys():
+        if key not in counts_real.keys():
+            counts_real[key] = 0
+        coefficient = coefficient + ((counts_real[key] - counts_sim[key]) ** 2 / (counts_real[key] + counts_sim[key]))
+    return coefficient / 2
+
 
 def calc_correlation(counts_sim, counts_real, shots):
     for key in counts_real.keys():
@@ -56,6 +67,8 @@ def calc_correlation(counts_sim, counts_real, shots):
     for key in counts_sim.keys():
         sum_sim = sum_sim + ((counts_sim[key] - h_sim) ** 2)
         sum_combined = sum_combined + ((counts_sim[key] - h_sim) * (counts_real[key]- h_real))
+    if sum_sim == 0 or sum_real == 0:
+        return None
     correlation = sum_combined / (math.sqrt(sum_sim * sum_real))
 
     return correlation

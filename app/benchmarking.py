@@ -79,13 +79,14 @@ def analyse():
     benchmarks = Benchmark.query.all()
     list = []
     for i in range(0, len(benchmarks), 2):
-        if benchmarks[i].complete and benchmarks[i + 1].complete and benchmarks[i].benchmark_id == benchmarks[
-            i + 1].benchmark_id:
+        if (benchmarks[i].complete and benchmarks[i + 1].complete) and \
+                (benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and \
+                (benchmarks[i].result != "" and benchmarks[i + 1].result != ""):
             counts_sim = json.loads(benchmarks[i].counts)
             counts_real = json.loads(benchmarks[i + 1].counts)
             prb_sim = json.loads(benchmarks[i].counts)
-            prb_real = json.loads(benchmarks[i+1].counts)
-            shots = benchmarks[i+1].shots
+            prb_real = json.loads(benchmarks[i + 1].counts)
+            shots = benchmarks[i + 1].shots
             for key in prb_sim.keys():
                 prb_sim[key] = prb_sim[key] / benchmarks[i].shots
                 if key not in prb_real.keys():
@@ -100,10 +101,11 @@ def analyse():
             # sd_real = analysis.calc_standard_deviation(prb_real, exp_value_real)
             perc_error = analysis.calc_percentage_error(counts_sim, counts_real)
             correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
+            chi_square = analysis.calc_chi_square_coefficient(counts_sim.copy(), counts_real.copy())
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
             list.append({"Benchmark " + str(benchmarks[i].benchmark_id): {
-                "Transpiled Depth": benchmarks[i+1].transpiled_depth,
-                "Transpiled Width": benchmarks[i+1].transpiled_width,
+                "Transpiled Depth": benchmarks[i + 1].transpiled_depth,
+                "Transpiled Width": benchmarks[i + 1].transpiled_width,
                 "Counts Sim": counts_sim,
                 # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
@@ -111,7 +113,8 @@ def analyse():
                 # "Expected Value Real": exp_value_real,
                 # "Standard Deviation Real": sd_real,
                 "Percentage Error": perc_error,
-                "Intersection": intersection,
-                "Correlation": correlation}
+                "Chi Square": chi_square,
+                "Correlation": correlation,
+                "Intersection": intersection}
             })
     return list
