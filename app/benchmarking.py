@@ -103,7 +103,11 @@ def analyse():
             correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
             chi_square = analysis.calc_chi_square_coefficient(counts_sim.copy(), counts_real.copy())
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
+            success = False
+            if intersection > 0.9:
+                success = True
             list.append({"Benchmark " + str(benchmarks[i].benchmark_id): {
+                "Success": success,
                 "Transpiled Depth": benchmarks[i + 1].transpiled_depth,
                 "Transpiled Width": benchmarks[i + 1].transpiled_width,
                 "Counts Sim": counts_sim,
