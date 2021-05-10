@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-
+import urllib.parse
 from urllib import request, error
 import tempfile
 import os, sys, shutil
@@ -56,10 +56,10 @@ def prepare_code_from_data(data, input_params):
     return circuit
 
 
-def prepare_code_from_url(url, input_params):
+def prepare_code_from_url(url, input_params, bearer_token: str = ""):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
     try:
-        impl = request.urlopen(url).read().decode("utf-8")
+        impl = _download_code(url, bearer_token)
     except (error.HTTPError, error.URLError):
         return None
 
@@ -71,11 +71,22 @@ def prepare_code_from_qasm(qasm):
     return qiskit.QuantumCircuit.from_qasm_str(qasm)
 
 
-def prepare_code_from_qasm_url(url):
+def prepare_code_from_qasm_url(url, bearer_token: str = ""):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
     try:
-        impl = request.urlopen(url).read().decode("utf-8")
+        impl = _download_code(url, bearer_token)
     except (error.HTTPError, error.URLError):
         return None
 
     return prepare_code_from_qasm(impl)
+
+
+def _download_code(url: str, bearer_token: str = "") -> str:
+    req = request.Request(url)
+
+    if urllib.parse.urlparse(url).netloc == "platform.planqk.de":
+        req.add_header("Authorization", bearer_token)
+
+    res = request.urlopen(req)
+
+    return res.read().decode("utf-8")

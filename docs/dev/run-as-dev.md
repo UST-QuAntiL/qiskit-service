@@ -26,6 +26,12 @@ import qiskit
 qiskit.IBMQ.save_account(TOKEN)
 ```
 
+### PlanQK token
+Store your bearer token as environment variable
+```
+BEARER_TOKEN="Bearer xyz"
+```
+
 ### Database
 * Install SQLite DB, f.e. as described [here](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-iv-database)
 * create a `data` folder in the `app` folder

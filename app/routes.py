@@ -42,6 +42,7 @@ def transpile_circuit():
     impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
     impl_url = request.json.get('impl-url', "")
+    bearer_token = request.json.get("bearer_token", "")
     input_params = parameters.ParameterDictionary(input_params)
     if 'token' in input_params:
         token = input_params['token']
@@ -54,11 +55,11 @@ def transpile_circuit():
         impl_url = request.json['impl-url']
         if impl_language.lower() == 'openqasm':
             short_impl_name = 'no name'
-            circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
+            circuit = implementation_handler.prepare_code_from_qasm_url(impl_url, bearer_token)
         else:
             short_impl_name = "untitled"
             try:
-                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
             except ValueError:
                 abort(400)
 
@@ -127,6 +128,7 @@ def execute_circuit():
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
+    bearer_token = request.json.get("bearer_token", "")
     impl_data = request.json.get('impl-data')
     transpiled_qasm = request.json.get('transpiled-qasm')
     input_params = request.json.get('input-params', "")
@@ -141,7 +143,7 @@ def execute_circuit():
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, input_params=input_params, shots=shots)
+                                    token=token, input_params=input_params, shots=shots, bearer_token=bearer_token)
     result = Result(id=job.get_id())
     db.session.add(result)
     db.session.commit()
