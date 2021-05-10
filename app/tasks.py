@@ -87,7 +87,8 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
 
 
 def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
-    """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
+    """Create database entry for result and benchmark. Get implementation code, prepare it, and execute it. Save
+    result in db """
     job = get_current_job()
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
@@ -124,7 +125,6 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
 
         db.session.commit()
 
-    # ibmq_handler.delete_token()
 
 
 def calculate_calibration_matrix(token, qpu_name, shots):

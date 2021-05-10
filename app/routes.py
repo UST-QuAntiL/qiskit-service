@@ -181,6 +181,7 @@ def calculate_calibration_matrix():
 
 @app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
 def randomize():
+    """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
     if not request.json:
         abort(400)
 
@@ -213,6 +214,7 @@ def get_result(result_id):
 
 @app.route('/qiskit-service/api/v1.0/benchmarks/<benchmark_id>', methods=['GET'])
 def get_benchmark(benchmark_id):
+    """Return benchmark when it is available"""
     benchmark_sim = None
     benchmark_real = None
     for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
@@ -276,6 +278,7 @@ def get_benchmark(benchmark_id):
 
 @app.route('/qiskit-service/api/v1.0/analysis', methods=['GET'])
 def get_analysis():
+    """Return analysis of all benchmarks saved in the database"""
     return jsonify(benchmarking.analyse())
 
 
