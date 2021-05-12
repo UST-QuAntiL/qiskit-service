@@ -198,7 +198,7 @@ def randomize():
                                        max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
                                        token=token)
 
-    return locations
+    return jsonify(locations)
 
 
 @app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])

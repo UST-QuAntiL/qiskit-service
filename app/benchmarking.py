@@ -37,13 +37,12 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     content_location = 'qiskit-service/api/v1.0/results/' + result.id
     return content_location
 
-
 def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of_circuit, num_of_circuits, token):
     """Create randomized circuits with given properties and jobs to run them on IBM backends."""
     sim_name = 'ibmq_qasm_simulator'
     backend_sim = ibmq_handler.get_qpu(token, sim_name)
     backend_real = ibmq_handler.get_qpu(token, qpu_name)
-    locations = ''
+    locations = []
 
     # create randomized circuits of given width and depth
     for i in range(min_depth_of_circuit, max_depth_of_circuit + 1):
@@ -71,9 +70,10 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
                                 benchmark_id=benchmark_id,
                                 original_depth=i, original_width=num_of_qubits, transpiled_depth=transpiled_depth_real,
                                 transpiled_width=transpiled_width_real)
-
-            locations = locations + 'Result simulator: ' + location_sim + '\nResult real backend: ' + location_real + \
-                        '\n ' + 'Result benchmark: qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id) + '\n '
+            location_benchmark = 'qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
+            locations.append({'Result simulator': str(location_sim),
+                              'Result real backend': str(location_real),
+                              'Result benchmark': str(location_benchmark)})
 
     return locations
 
