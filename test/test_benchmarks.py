@@ -113,5 +113,6 @@ class BenchmarksTestCase(unittest.TestCase):
         self.assertEquals(1024, benchmark[1]['shots'])
         self.assertEqual(True, benchmark[1]['complete'])
 
+
 if __name__ == "__main__":
     unittest.main()
