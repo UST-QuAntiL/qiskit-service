@@ -209,8 +209,7 @@ Chi-Square-Distance, Correlation, Percentage Error and Histogram Intersection.
   It it normalized between 0 and 1, where 1 would mean that the two histograms are the same.
   Therefore it is a useful metric to judge the quality of the quantum computer's result.
   
-The reponse also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit and a boolean whether the benchmark can be considered successful.
-A benchmark is considered successful if the histogram intersection gives a value greater than 0.9.
+The reponse also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit.
 
 `GET /qiskit-service/api/v1.0/analysis`
 
