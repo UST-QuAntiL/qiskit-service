@@ -42,7 +42,7 @@ def transpile_circuit():
     impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
     impl_url = request.json.get('impl-url', "")
-    bearer_token = request.json.get("bearer_token", "")
+    bearer_token = request.json.get("bearer-token", "")
     input_params = parameters.ParameterDictionary(input_params)
     if 'token' in input_params:
         token = input_params['token']
@@ -128,7 +128,7 @@ def execute_circuit():
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
-    bearer_token = request.json.get("bearer_token", "")
+    bearer_token = request.json.get("bearer-token", "")
     impl_data = request.json.get('impl-data')
     transpiled_qasm = request.json.get('transpiled-qasm')
     input_params = request.json.get('input-params', "")

@@ -239,7 +239,7 @@ class TranspileTestCase(unittest.TestCase):
             'qpu-name': "ibmq_qasm_simulator",
             'input-params': {},
             'token': token,
-            "bearer_token": os.environ["BEARER_TOKEN"]
+            "bearer-token": os.environ["BEARER_TOKEN"]
         }
 
         # send the request
