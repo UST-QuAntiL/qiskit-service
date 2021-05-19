@@ -26,6 +26,42 @@ import qiskit
 qiskit.IBMQ.save_account(TOKEN)
 ```
 
+### PlanQK token
+To run the tests store your bearer token as environment variable:
+```
+BEARER_TOKEN=Bearer ***your-bearer-token***
+```
+or like this with quotes if you run it from the command line:
+```
+export BEARER_TOKEN="Bearer ***your-bearer-token***"
+```
+
+#### Example request with bearer token
+If you want to make a request with an impl-url from the PlanQK platform, you need to provide your bearer token like this:
+```
+{  
+    "impl-url": "URL-OF-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"OpenQASM",
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN",
+    "bearer-token": "Bearer YOUR-PLANQK-BEARER-TOKEN"
+}
+```
 ### Database
 * Install SQLite DB, f.e. as described [here](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-iv-database)
 * create a `data` folder in the `app` folder

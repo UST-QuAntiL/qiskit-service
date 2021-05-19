@@ -230,5 +230,33 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("error", json_data)
         self.assertIn("too many qubits", json_data['error'])
 
+    def test_transpile_shor_simulator_planqk_url(self):
+        # prepare the request
+        token = qiskit.IBMQ.stored_account()['token']
+        request = {
+            'impl-url': "https://platform.planqk.de/qc-catalog/algorithms/e7413acf-c25e-4de8-ab78-75bfc836a839/implementations/1207510f-9007-48b3-93b8-ea51359c0ced/files/1d827208-1976-487e-819b-64df6e990bf3/content",
+            'impl-language': 'Qiskit',
+            'qpu-name': "ibmq_qasm_simulator",
+            'input-params': {},
+            'token': token,
+            "bearer-token": os.environ["BEARER_TOKEN"]
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertEqual(json_data['depth'], 7)
+        self.assertEqual(json_data['width'], 5)
+
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
+
+
 if __name__ == "__main__":
     unittest.main()
