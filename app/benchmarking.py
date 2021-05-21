@@ -34,7 +34,7 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     benchmark.benchmark_id = benchmark_id
     db.session.commit()
 
-    content_location = 'qiskit-service/api/v1.0/results/' + result.id
+    content_location = '/qiskit-service/api/v1.0/results/' + result.id
     return content_location
 
 def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of_circuit, num_of_circuits, token):
@@ -70,7 +70,7 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
                                 benchmark_id=benchmark_id,
                                 original_depth=i, original_width=num_of_qubits, transpiled_depth=transpiled_depth_real,
                                 transpiled_width=transpiled_width_real)
-            location_benchmark = 'qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
+            location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
             locations.append({'Result simulator': str(location_sim),
                               'Result real backend': str(location_real),
                               'Result benchmark': str(location_benchmark)})
