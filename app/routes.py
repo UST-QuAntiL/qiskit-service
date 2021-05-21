@@ -270,8 +270,8 @@ def get_benchmark(benchmark_id):
                              'shots': benchmark_real.shots
                              }]), 200
         else:
-            return jsonify([{'id': benchmark.id, 'complete': benchmark.complete},
-                            {'id': benchmark.id, 'complete': benchmark.complete}]), 200
+            return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
+                            {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
     else:
         abort(404)
 
