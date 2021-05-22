@@ -104,6 +104,7 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
     logging.info('Start executing...')
     job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
+        # once the job is finished save results in db
         result = Result.query.get(job.get_id())
         result.result = json.dumps(job_result)
         result.complete = True
@@ -124,7 +125,6 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
         benchmark.complete = True
 
         db.session.commit()
-
 
 
 def calculate_calibration_matrix(token, qpu_name, shots):

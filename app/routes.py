@@ -214,18 +214,24 @@ def get_result(result_id):
 
 @app.route('/qiskit-service/api/v1.0/benchmarks/<benchmark_id>', methods=['GET'])
 def get_benchmark(benchmark_id):
-    """Return benchmark when it is available"""
+    """Return summary of benchmark when it is available. Includes result of both simulator and quantum computer if
+    available """
     benchmark_sim = None
     benchmark_real = None
+    # get the simulator's and quantum computer's result from the db
     for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
         if json.loads(benchmark.backend) == 'ibmq_qasm_simulator':
             benchmark_sim = benchmark
         else:
             benchmark_real = benchmark
+    # check which backend has finished execution and adapt response to that
     if (benchmark_sim is not None) and (benchmark_real is not None):
         if benchmark_sim.complete and benchmark_real.complete:
             if benchmark_sim.result == "" or benchmark_real.result == "":
+                # one backend failed during the execution
                 return json.dumps({'error': 'execution failed'})
+
+            # both backends finished execution
             return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
                              'counts': json.loads(benchmark_sim.counts),
                              'original_depth': benchmark_sim.original_depth,
@@ -244,9 +250,13 @@ def get_benchmark(benchmark_id):
                              'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
                              'shots': benchmark_real.shots
                              }]), 200
+
         elif benchmark_sim.complete and not benchmark_real.complete:
             if benchmark_sim.result == "":
+                # execution on simulator failed
                 return json.dumps({'error': 'execution failed'})
+
+            # simulator finished execution, quantum computer not yet
             return jsonify(
                 [{'id': benchmark_sim.id, 'backend': benchmark_sim.backend, 'counts': json.loads(benchmark_sim.counts),
                   'original_depth': benchmark_sim.original_depth, 'original_width': benchmark_sim.original_width,
@@ -256,9 +266,13 @@ def get_benchmark(benchmark_id):
                   'shots': benchmark_sim.shots
                   },
                  {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
+
         elif not benchmark_sim.complete and benchmark_real.complete:
             if benchmark_real.result == "":
+                # execution on quantum computer failed
                 return json.dumps({'error': 'execution failed'})
+
+            # quantum computer finished execution, simulator not yet
             return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
                             {'id': benchmark_real.id, 'backend': benchmark_real.backend,
                              'counts': json.loads(benchmark_real.counts),
@@ -270,6 +284,7 @@ def get_benchmark(benchmark_id):
                              'shots': benchmark_real.shots
                              }]), 200
         else:
+            # both backends did not finish execution yet
             return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
                             {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
     else:

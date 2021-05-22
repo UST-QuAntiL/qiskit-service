@@ -173,7 +173,8 @@ Returns a content location for the result. Access it via `GET`.
 
 ## Benchmark Request
 Send QPU information, the width and depth of the circuit, the number of circuits you want to create, the number of shots
-and your IBM Quantum Experience token to the API to get the result on the IBM Quantum Simulator and the stated QPU.
+and your IBM Quantum Experience token to the API to get the result on the IBM Quantum Simulator, and the stated QPU.
+The response also contains a link to the summary of the benchmark.
 
 `POST /qiskit-service/api/v1.0/randomize`
 
@@ -190,9 +191,9 @@ and your IBM Quantum Experience token to the API to get the result on the IBM Qu
 ```
 
 Please make sure that ```number_of_qubits```, ```number_of_circuits``` and ```min_depth_of_circuit``` are greater than 0.
-Also, ```max_depth_of_cicuit``` has to be greater than ```min_depth_of_circuit```.
+Also, ```max_depth_of_cicuit``` has to be greater or equal to ```min_depth_of_circuit```.
 
-Returns a list of links to the results on both backends and a link to the benchmark result which returns corresponding
+Returns a list of links to the results on both backends, and a link to the benchmark result which returns corresponding
 executions on simulator and real quantum computer.
 Access those via `GET /qiskit-service/api/v1.0/benchmarks/<benchmark_id>`.`
 
@@ -206,8 +207,8 @@ Chi-Square-Distance, Correlation, Percentage Error and Histogram Intersection.
 - Percentage Error: Indicates the error in relation to the ideal value for each count separately.
   This metric does not provide a general view on the quality of the result.
 - Histogram Intersection: Returns a value that indicates how much of the histograms overlap.
-  It it normalized between 0 and 1, where 1 would mean that the two histograms are the same.
-  Therefore it is a useful metric to judge the quality of the quantum computer's result.
+  It is normalized between 0 and 1, where 1 would mean that the two histograms are the same.
+  Therefore, it is a useful metric to judge the quality of the quantum computer's result.
   
 The reponse also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit.
 

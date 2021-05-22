@@ -20,7 +20,7 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     qasm = circuit.qasm()
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
                                     shots=shots)
-    # save properties to db
+    # save becnhmark properties to db
     result = Result(id=job.get_id())
     benchmark = Benchmark(id=job.get_id())
     db.session.add(result)
@@ -37,6 +37,7 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     content_location = '/qiskit-service/api/v1.0/results/' + result.id
     return content_location
 
+
 def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of_circuit, num_of_circuits, token):
     """Create randomized circuits with given properties and jobs to run them on IBM backends."""
     sim_name = 'ibmq_qasm_simulator'
@@ -44,14 +45,16 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
     backend_real = ibmq_handler.get_qpu(token, qpu_name)
     locations = []
 
-    # create randomized circuits of given width and depth
+    # create the given number of circuits of given width and depth
     for i in range(min_depth_of_circuit, max_depth_of_circuit + 1):
         for j in range(num_of_circuits):
             rowcount = db.session.query(Benchmark).count()
             benchmark_id = rowcount // 2
+            # create randomized circuits and transpile them for both backends
             qx = random_circuit(num_qubits=num_of_qubits, depth=i, measure=True)
             qcircuit_sim = transpile(qx, backend=backend_sim, optimization_level=3)
             qcircuit_real = transpile(qx, backend=backend_real, optimization_level=3)
+            # ensure that the width of the circuit is correctly saved in the db
             remove_final_meas = RemoveFinalMeasurements()
             active_qubits_real = [
                 qubit for qubit in qcircuit_real.qubits if
@@ -89,6 +92,7 @@ def analyse():
                 (benchmarks[i].result != "" and benchmarks[i + 1].result != ""):
             counts_sim = json.loads(benchmarks[i].counts)
             counts_real = json.loads(benchmarks[i + 1].counts)
+            # prb_sim and prb_real will contain the probability distribution of the result
             prb_sim = json.loads(benchmarks[i].counts)
             prb_real = json.loads(benchmarks[i + 1].counts)
             shots = benchmarks[i + 1].shots
@@ -100,10 +104,15 @@ def analyse():
                 prb_real[key] = prb_real[key] / benchmarks[i + 1].shots
                 if key not in prb_sim.keys():
                     prb_sim[key] = 0
+
+            # create a list of the analysis of all benchmarks as response
+            # expected value and standard deviation are currently not used
+
             # exp_value_sim = analysis.calc_expected_value(prb_sim)
             # exp_value_real = analysis.calc_expected_value(prb_real)
             # sd_sim = analysis.calc_standard_deviation(prb_sim, exp_value_sim)
             # sd_real = analysis.calc_standard_deviation(prb_real, exp_value_real)
+
             perc_error = analysis.calc_percentage_error(counts_sim, counts_real)
             correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
             chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())

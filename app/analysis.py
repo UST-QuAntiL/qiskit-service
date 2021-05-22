@@ -4,7 +4,8 @@ import scipy
 
 
 def calc_expected_value(counts_dict):
-    """Returns the expected value of the histogram, if the results can be interpreted as binary numbers"""
+    """Returns the expected value of the histogram of the counts provided as a dict, if the results can be
+    interpreted as binary numbers """
     result = 0
     for key in counts_dict.keys():
         result += int(key, 2) * counts_dict[key]
@@ -12,7 +13,8 @@ def calc_expected_value(counts_dict):
 
 
 def calc_standard_deviation(counts_dict, expected_value):
-    """Returns the standard deviation of the histogram, if the results can be interpreted as binary numbers"""
+    """Returns the standard deviation of the histogram of the counts provided as a dict, if the results can be
+     interpreted as binary numbers"""
     sum = 0
     for key in counts_dict.keys():
         sum += ((int(key, 2) - expected_value) ** 2) * counts_dict[key]
@@ -20,7 +22,7 @@ def calc_standard_deviation(counts_dict, expected_value):
 
 
 def calc_percentage_error(counts_sim, counts_real):
-    """Returns the percentage errors for each count"""
+    """Returns the percentage errors for each count provided in the dict"""
     result = {}
     for key in counts_sim.keys():
         if key in counts_real.keys():
@@ -33,36 +35,45 @@ def calc_intersection(counts_sim, counts_real, shots):
     """Returns the histogram intersection value for the two histograms of simulator and quantum computer"""
     intersection = 0
     for key in counts_real.keys():
+        # add missing keys from quantum computer to simulator
         if key not in counts_sim.keys():
             counts_sim[key] = 0
     for key in counts_sim.keys():
+        # add missing keys from simulator to quantum computer
         if key not in counts_real.keys():
             counts_real[key] = 0
+        # calculate histogram intersection
         intersection = intersection + min(counts_sim[key], counts_real[key])
     return intersection / shots
 
 
 def calc_chi_square_distance(counts_sim, counts_real):
-    """Returns the chi-square-distance for the two histograms"""
+    """Returns the chi-square-distance for the two histograms of simulator and quantum computer"""
     coefficient = 0
     for key in counts_real.keys():
+        # add missing keys from quantum computer to simulator
         if key not in counts_sim.keys():
             counts_sim[key] = 0
     for key in counts_sim.keys():
+        # add missing keys from simulator to quantum computer
         if key not in counts_real.keys():
             counts_real[key] = 0
+        # calculate chi square distance
         coefficient = coefficient + ((counts_real[key] - counts_sim[key]) ** 2 / (counts_real[key] + counts_sim[key]))
     return coefficient / 2
 
 
 def calc_correlation(counts_sim, counts_real, shots):
-    """Returns the correlation between the two histograms"""
+    """Returns the correlation between the two histograms of the simulator and quantum computer"""
     for key in counts_real.keys():
+        # add missing keys from quantum computer to simulator
         if key not in counts_sim.keys():
             counts_sim[key] = 0
     for key in counts_sim.keys():
+        # add missing keys from simulator to quantum computer
         if key not in counts_real.keys():
             counts_real[key] = 0
+    # calculate correlation value for the two histogram
     sum_combined = 0
     sum_sim = 0
     sum_real = 0
