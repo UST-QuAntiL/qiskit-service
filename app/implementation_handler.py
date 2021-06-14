@@ -98,7 +98,7 @@ def _download_code(url: str, bearer_token: str = "") -> str:
     except Exception as e:
         app.logger.error("Could not open url: " + str(e))
 
-    if res.getcode() == 200:
+    if res.getcode() == 200 and urllib.parse.urlparse(url).netloc == "platform.planqk.de":
         app.logger.info("Request to platform.planqk.de was executed successfully.")
 
     return res.read().decode("utf-8")
