@@ -24,7 +24,6 @@ from qiskit import transpile
 from qiskit.transpiler.passes import RemoveFinalMeasurements
 from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
-import logging
 import json
 import re
 import base64
@@ -148,7 +147,7 @@ def execute_circuit():
     db.session.add(result)
     db.session.commit()
 
-    logging.info('Returning HTTP response to client...')
+    app.logger.info('Returning HTTP response to client...')
     content_location = '/qiskit-service/api/v1.0/results/' + result.id
     response = jsonify({'Location': content_location})
     response.status_code = 202
@@ -171,7 +170,7 @@ def calculate_calibration_matrix():
     db.session.add(result)
     db.session.commit()
 
-    logging.info('Returning HTTP response to client...')
+    app.logger.info('Returning HTTP response to client...')
     content_location = '/qiskit-service/api/v1.0/results/' + result.id
     response = jsonify({'Location': content_location})
     response.status_code = 202

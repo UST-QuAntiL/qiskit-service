@@ -17,12 +17,15 @@
 #  limitations under the License.
 # ******************************************************************************
 import urllib.parse
+from http.client import HTTPResponse
 from urllib import request, error
 import tempfile
 import os, sys, shutil
 from importlib import reload
 import qiskit
+from flask import abort
 
+from app import app
 
 
 
@@ -85,8 +88,29 @@ def _download_code(url: str, bearer_token: str = "") -> str:
     req = request.Request(url)
 
     if urllib.parse.urlparse(url).netloc == "platform.planqk.de":
-        req.add_header("Authorization", bearer_token)
+        if bearer_token == "":
+            app.logger.error("No bearer token specified, download from the PlanQK platform will fail.")
 
-    res = request.urlopen(req)
+            abort(401)
+        elif bearer_token.startswith("Bearer"):
+            app.logger.error("The bearer token MUST NOT start with \"Bearer\".")
+
+            abort(401)
+
+        req.add_header("Authorization", "Bearer " + bearer_token)
+
+    try:
+        res: HTTPResponse = request.urlopen(req)
+    except Exception as e:
+        app.logger.error("Could not open url: " + str(e))
+
+        if str(e).find("401") != -1:
+            abort(401)
+
+    if res.getcode() == 200 and urllib.parse.urlparse(url).netloc == "platform.planqk.de":
+        app.logger.info("Request to platform.planqk.de was executed successfully.")
+
+    if res.getcode() == 401:
+        abort(401)
 
     return res.read().decode("utf-8")
