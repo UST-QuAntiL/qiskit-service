@@ -13,6 +13,7 @@ docker build -t planqk/qiskit-service:latest .
 docker-compose up
 ```
 ## Local Setup
+At _Run > Edit Configurations..._ set `Environment variables: FLASK_RUN_PORT=5013`.
 
 ### Python Packages
 Install packages as listed in [requirements.txt](https://github.com/PlanQK/qiskit-service/blob/master/requirements.txt).
