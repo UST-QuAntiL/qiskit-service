@@ -6,6 +6,7 @@ volumes:
 services:
   redis:
     image: redis:latest
+    command: --port 5040
     ports:
       - "5040:5040"
     networks:
@@ -16,7 +17,7 @@ services:
     ports:
       - "5013:5013"
     environment:
-      - REDIS_URL=redis://redis
+      - REDIS_URL=redis://redis:5040
       - DATABASE_URL=sqlite:////data/app.db
     volumes:
       - exec_data:/data
@@ -25,9 +26,9 @@ services:
 
   rq-worker:
     image: planqk/qiskit-service:latest
-    command: rq worker --url redis://redis qiskit-service_execute
+    command: rq worker --url redis://redis:5040 qiskit-service_execute
     environment:
-      - REDIS_URL=redis://redis
+      - REDIS_URL=redis://redis:5040
       - DATABASE_URL=sqlite:////data/app.db
     volumes:
       - exec_data:/data
@@ -42,7 +43,7 @@ services:
     ports:
       - "9181:9181"
     environment:
-      - RQ_DASHBOARD_REDIS_URL=redis://redis:6379
+      - RQ_DASHBOARD_REDIS_URL=redis://redis:5040
 
 networks:
   default:
