@@ -158,6 +158,49 @@ Send QPU information, optional shots, and your IBM Quantum Experience token to t
 
 Returns a content location for the result. Access it via `GET`.
 
+## Benchmark Request
+Send QPU information, the width and depth of the circuit, the number of circuits you want to create, the number of shots
+and your IBM Quantum Experience token to the API to get the result on the IBM Quantum Simulator, and the stated QPU.
+The response also contains a link to the summary of the benchmark.
+
+`POST /qiskit-service/api/v1.0/randomize`
+
+```
+{  
+    "qpu-name": "NAME-OF-QPU",
+    "number_of_qubits": "NUMBER-OF-QUBITS",
+    "min_depth_of_circuit": "MIN-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
+    "max_depth_of_circuit": "MAX-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
+    "number_of_circuits": "NUMBER-OF-CIRCUITS",
+    "shots": "NUMBER-OF-SHOTS",
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+
+Please make sure that ```number_of_qubits```, ```number_of_circuits``` and ```min_depth_of_circuit``` are greater than 0.
+Also, ```max_depth_of_cicuit``` has to be greater or equal to ```min_depth_of_circuit```.
+
+Returns a list of links to the results on both backends, and a link to the benchmark result which returns corresponding
+executions on simulator and real quantum computer.
+Access those via `GET /qiskit-service/api/v1.0/benchmarks/<benchmark_id>`.`
+
+## Analysis Request
+Request an analysis of all benchmarks in the database that successfully returned a result.
+For those benchmarks, the histograms of the simulator's and the quantum computer's result are compared using the four metrics:
+Chi-Square-Distance, Correlation, Percentage Error and Histogram Intersection.
+- Chi-Square-Distance: Large values indicate a strong deviation between the two histogram, however it is not normalized and difficult to interpret.
+- Correlation: Normalized between -1 and 1, where values close to 1 indicate a strong correlation between the histograms.
+  Since the histograms often have a similar shape even though the counts are erroneous, the correlation often suggests success even for bad results.
+- Percentage Error: Indicates the error in relation to the ideal value for each count separately.
+  This metric does not provide a general view on the quality of the result.
+- Histogram Intersection: Returns a value that indicates how much of the histograms overlap.
+  It is normalized between 0 and 1, where 1 would mean that the two histograms are the same.
+  Therefore, it is a useful metric to judge the quality of the quantum computer's result.
+  
+The reponse also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit.
+
+`GET /qiskit-service/api/v1.0/analysis`
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).

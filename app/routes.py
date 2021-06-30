@@ -17,7 +17,8 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, ibmq_handler, implementation_handler, db, parameters
+from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters
+from app.benchmark_model import Benchmark
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
@@ -25,7 +26,6 @@ from qiskit.transpiler.passes import RemoveFinalMeasurements
 from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
 import json
-import re
 import base64
 
 
@@ -110,7 +110,6 @@ def transpile_circuit():
         depth = transpiled_circuit.depth()
         print(f"Transpiled width {width} & transpiled depth {depth}")
 
-
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
         return jsonify({'error': 'too many qubits required'}), 200
@@ -178,6 +177,28 @@ def calculate_calibration_matrix():
     return response
 
 
+@app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
+def randomize():
+    """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
+    if not request.json:
+        abort(400)
+
+    qpu_name = request.json['qpu-name']
+    num_of_qubits = request.json['number_of_qubits']
+    min_depth_of_circuit = request.json['min_depth_of_circuit']
+    max_depth_of_circuit = request.json['max_depth_of_circuit']
+    num_of_circuits = request.json['number_of_circuits']
+    shots = request.json.get('shots', 1024)
+    token = request.json['token']
+
+    locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
+                                       min_depth_of_circuit=min_depth_of_circuit,
+                                       max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
+                                       token=token)
+
+    return jsonify(locations)
+
+
 @app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])
 def get_result(result_id):
     """Return result when it is available."""
@@ -187,6 +208,91 @@ def get_result(result_id):
         return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
+
+
+@app.route('/qiskit-service/api/v1.0/benchmarks/<benchmark_id>', methods=['GET'])
+def get_benchmark(benchmark_id):
+    """Return summary of benchmark when it is available. Includes result of both simulator and quantum computer if
+    available """
+    benchmark_sim = None
+    benchmark_real = None
+    # get the simulator's and quantum computer's result from the db
+    for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
+        if json.loads(benchmark.backend) == 'ibmq_qasm_simulator':
+            benchmark_sim = benchmark
+        else:
+            benchmark_real = benchmark
+    # check which backend has finished execution and adapt response to that
+    if (benchmark_sim is not None) and (benchmark_real is not None):
+        if benchmark_sim.complete and benchmark_real.complete:
+            if benchmark_sim.result == "" or benchmark_real.result == "":
+                # one backend failed during the execution
+                return json.dumps({'error': 'execution failed'})
+
+            # both backends finished execution
+            return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
+                             'counts': json.loads(benchmark_sim.counts),
+                             'original_depth': benchmark_sim.original_depth,
+                             'original_width': benchmark_sim.original_width,
+                             'transpiled_depth': benchmark_sim.transpiled_depth,
+                             'transpiled_width': benchmark_sim.transpiled_width,
+                             'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                             'shots': benchmark_sim.shots
+                             },
+                            {'id': benchmark_real.id, 'backend': json.loads(benchmark_real.backend),
+                             'counts': json.loads(benchmark_real.counts),
+                             'original_depth': benchmark_real.original_depth,
+                             'original_width': benchmark_real.original_width,
+                             'transpiled_depth': benchmark_real.transpiled_depth,
+                             'transpiled_width': benchmark_real.transpiled_width,
+                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'shots': benchmark_real.shots
+                             }]), 200
+
+        elif benchmark_sim.complete and not benchmark_real.complete:
+            if benchmark_sim.result == "":
+                # execution on simulator failed
+                return json.dumps({'error': 'execution failed'})
+
+            # simulator finished execution, quantum computer not yet
+            return jsonify(
+                [{'id': benchmark_sim.id, 'backend': benchmark_sim.backend, 'counts': json.loads(benchmark_sim.counts),
+                  'original_depth': benchmark_sim.original_depth, 'original_width': benchmark_sim.original_width,
+                  'transpiled_depth': benchmark_sim.transpiled_depth,
+                  'transpiled_width': benchmark_sim.transpiled_width,
+                  'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                  'shots': benchmark_sim.shots
+                  },
+                 {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
+
+        elif not benchmark_sim.complete and benchmark_real.complete:
+            if benchmark_real.result == "":
+                # execution on quantum computer failed
+                return json.dumps({'error': 'execution failed'})
+
+            # quantum computer finished execution, simulator not yet
+            return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
+                            {'id': benchmark_real.id, 'backend': benchmark_real.backend,
+                             'counts': json.loads(benchmark_real.counts),
+                             'original_depth': benchmark_real.original_depth,
+                             'original_width': benchmark_real.original_width,
+                             'transpiled_depth': benchmark_real.transpiled_depth,
+                             'transpiled_width': benchmark_real.transpiled_width,
+                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'shots': benchmark_real.shots
+                             }]), 200
+        else:
+            # both backends did not finish execution yet
+            return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
+                            {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
+    else:
+        abort(404)
+
+
+@app.route('/qiskit-service/api/v1.0/analysis', methods=['GET'])
+def get_analysis():
+    """Return analysis of all benchmarks saved in the database"""
+    return jsonify(benchmarking.analyse())
 
 
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])

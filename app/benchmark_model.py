@@ -17,22 +17,21 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from flask import Flask
-from app.config import Config
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from redis import Redis
-import rq
-from app import Config
-import logging
+from app import db
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
-from app import routes, result_model, benchmark_model, errors
+class Benchmark(db.Model):
+    id = db.Column(db.String(36), primary_key=True)
+    benchmark_id = db.Column(db.Integer)
+    backend = db.Column(db.String(1200), default="")
+    result = db.Column(db.String(1200), default="")
+    counts = db.Column(db.String(1200), default="")
+    shots = db.Column(db.Integer)
+    original_depth = db.Column(db.Integer)
+    original_width = db.Column(db.Integer)
+    transpiled_depth = db.Column(db.Integer)
+    transpiled_width = db.Column(db.Integer)
+    complete = db.Column(db.Boolean, default=False)
 
-app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
-app.execute_queue = rq.Queue('qiskit-service_execute', connection=app.redis, default_timeout=3600)
-app.logger.setLevel(logging.INFO)
+    def __repr__(self):
+        return 'Benchmark {}'.format(self.result)

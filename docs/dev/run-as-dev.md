@@ -67,9 +67,16 @@ If you want to make a request with an impl-url from the PlanQK platform, you nee
 ### Database
 * Install SQLite DB, f.e. as described [here](https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-iv-database)
 * create a `data` folder in the `app` folder
-* Setup results table with the following commands:
+* Setup results table (also consider benchmark table) with the following commands:
 ```
 flask db migrate -m "results table"
+flask db upgrade
+```
+
+To add further tables, run the following commands:  
+```
+flask db stamp head
+flask db migrate
 flask db upgrade
 ```
 

@@ -24,10 +24,10 @@ class ParameterDictionary(dict):
     Definition of supported parameter types
     """
     __parameter_types = {
-        "String" : str,
-        "Integer" : int,
-        "Float" : float,
-        "Unknown" : str
+        "String": str,
+        "Integer": int,
+        "Float": float,
+        "Unknown": str
     }
 
     """
