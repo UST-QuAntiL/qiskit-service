@@ -1,15 +1,11 @@
 import json
-import math
 
-from flask import request, abort, jsonify
-from qiskit import IBMQ, assemble, transpile
+from qiskit import transpile
 from qiskit.circuit.random import random_circuit
 from qiskit.converters import circuit_to_dag
-from qiskit.providers.jobstatus import JOB_FINAL_STATES
-from qiskit.providers import JobError
 from qiskit.transpiler.passes import RemoveFinalMeasurements
 
-from app import app, db, parameters, ibmq_handler, analysis
+from app import app, db, ibmq_handler, analysis
 from app.benchmark_model import Benchmark
 from app.result_model import Result
 
@@ -20,7 +16,7 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     qasm = circuit.qasm()
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
                                     shots=shots)
-    # save becnhmark properties to db
+    # save benchmark properties to db
     result = Result(id=job.get_id())
     benchmark = Benchmark(id=job.get_id())
     db.session.add(result)

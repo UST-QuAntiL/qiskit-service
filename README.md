@@ -172,7 +172,7 @@ The response also contains a link to the summary of the benchmark.
     "min_depth_of_circuit": "MIN-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
     "max_depth_of_circuit": "MAX-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
     "number_of_circuits": "NUMBER-OF-CIRCUITS",
-    "shots": "NUMBER-OF-SHOTS"
+    "shots": "NUMBER-OF-SHOTS",
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```

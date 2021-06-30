@@ -16,18 +16,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-from qiskit.circuit.random import random_circuit
 
 from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters
 from app.benchmark_model import Benchmark
 from app.result_model import Result
 from flask import jsonify, abort, request
-from qiskit import transpile, IBMQ
+from qiskit import transpile
 from qiskit.transpiler.passes import RemoveFinalMeasurements
 from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
 import json
-import re
 import base64
 
 
@@ -111,7 +109,6 @@ def transpile_circuit():
         width = len(active_qubits)
         depth = transpiled_circuit.depth()
         print(f"Transpiled width {width} & transpiled depth {depth}")
-
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")

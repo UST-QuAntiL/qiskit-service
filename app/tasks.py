@@ -105,20 +105,20 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
         result.complete = True
         db.session.commit()
 
-    logging.info('Preparing implementation...')
+    app.logger.info('Preparing implementation...')
     transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
 
-    logging.info('Start executing...')
+    app.logger.info('Start executing...')
     job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         # once the job is finished save results in db
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result)
+        result.result = json.dumps(job_result, default=convertInSuitableFormat)
         result.complete = True
 
         benchmark = Benchmark.query.get(job.get_id())
         benchmark.backend = json.dumps(qpu_name)
-        benchmark.result = json.dumps(job_result)
+        benchmark.result = json.dumps(job_result, default=convertInSuitableFormat)
         benchmark.counts = json.dumps(job_result['counts'])
         benchmark.complete = True
 

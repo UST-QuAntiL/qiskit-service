@@ -28,7 +28,6 @@ from flask import abort
 from app import app
 
 
-
 def prepare_code_from_data(data, input_params):
     """Get implementation code from data. Set input parameters into implementation. Return circuit."""
     temp_dir = tempfile.mkdtemp()

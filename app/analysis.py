@@ -1,8 +1,5 @@
 import math
 
-import scipy
-
-
 def calc_expected_value(counts_dict):
     """Returns the expected value of the histogram of the counts provided as a dict, if the results can be
     interpreted as binary numbers """
@@ -83,7 +80,7 @@ def calc_correlation(counts_sim, counts_real, shots):
         sum_real = sum_real + ((counts_real[key] - h_real) ** 2)
     for key in counts_sim.keys():
         sum_sim = sum_sim + ((counts_sim[key] - h_sim) ** 2)
-        sum_combined = sum_combined + ((counts_sim[key] - h_sim) * (counts_real[key]- h_real))
+        sum_combined = sum_combined + ((counts_sim[key] - h_sim) * (counts_real[key] - h_real))
     if sum_sim == 0 or sum_real == 0:
         return None
     correlation = sum_combined / (math.sqrt(sum_sim * sum_real))

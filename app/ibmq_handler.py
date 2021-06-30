@@ -18,7 +18,7 @@
 # ******************************************************************************
 from time import sleep
 
-from qiskit import IBMQ, assemble, QiskitError, QuantumRegister, execute
+from qiskit import IBMQ, QiskitError, QuantumRegister, execute
 from qiskit.ignis.mitigation import CompleteMeasFitter, complete_meas_cal
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
@@ -44,7 +44,7 @@ def delete_token():
 
 
 def execute_job(transpiled_circuit, shots, backend):
-    """Genereate qObject from transpiled circuit and execute it. Return result."""
+    """Generate qObject from transpiled circuit and execute it. Return result."""
 
     try:
         job = backend.run(transpiled_circuit, shots=shots)
