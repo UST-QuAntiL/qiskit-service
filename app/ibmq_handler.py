@@ -47,8 +47,7 @@ def execute_job(transpiled_circuit, shots, backend):
     """Genereate qObject from transpiled circuit and execute it. Return result."""
 
     try:
-        qobj = assemble(transpiled_circuit, shots=shots)
-        job = backend.run(qobj)
+        job = backend.run(transpiled_circuit, shots=shots)
 
         job_status = job.status()
         while job_status not in JOB_FINAL_STATES:

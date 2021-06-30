@@ -33,6 +33,6 @@ migrate = Migrate(app, db)
 
 from app import routes, result_model, benchmark_model, errors
 
-app.redis = Redis.from_url(app.config['REDIS_URL'])
+app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
 app.execute_queue = rq.Queue('qiskit-service_execute', connection=app.redis, default_timeout=3600)
 app.logger.setLevel(logging.INFO)

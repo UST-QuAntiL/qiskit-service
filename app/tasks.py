@@ -16,8 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import datetime
 
-from app import implementation_handler, ibmq_handler, db
+from app import implementation_handler, ibmq_handler, db, app
 from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
@@ -25,13 +26,13 @@ from rq import get_current_job
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
 from app.result_model import Result
-import logging
 import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots):
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token: str):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
+    app.logger.info("Starting execute task...")
     job = get_current_job()
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
@@ -41,15 +42,15 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         result.complete = True
         db.session.commit()
 
-    logging.info('Preparing implementation...')
+    app.logger.info('Preparing implementation...')
     if transpiled_qasm:
         transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
     else:
         if impl_url:
             if impl_language.lower() == 'openqasm':
-                circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
+                circuit = implementation_handler.prepare_code_from_qasm_url(impl_url, bearer_token)
             else:
-                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
         elif impl_data:
             impl_data = base64.b64decode(impl_data.encode()).decode()
             if impl_language.lower() == 'openqasm':
@@ -61,7 +62,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             result.result = json.dumps({'error': 'URL not found'})
             result.complete = True
             db.session.commit()
-        logging.info('Start transpiling...')
+        app.logger.info('Start transpiling...')
         try:
             transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
         except TranspilerError:
@@ -70,11 +71,11 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             result.complete = True
             db.session.commit()
 
-    logging.info('Start executing...')
+    app.logger.info('Start executing...')
     job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result)
+        result.result = json.dumps(job_result, default=convertInSuitableFormat)
         result.complete = True
         db.session.commit()
     else:
@@ -84,6 +85,12 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         db.session.commit()
 
     # ibmq_handler.delete_token()
+
+
+def convertInSuitableFormat(object):
+    """Enables the serialization of the unserializable datetime.datetime format"""
+    if isinstance(object, datetime.datetime):
+        return object.__str__()
 
 
 def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
