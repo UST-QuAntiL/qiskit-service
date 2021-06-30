@@ -13,7 +13,8 @@ docker build -t planqk/qiskit-service:latest .
 docker-compose up
 ```
 ## Local Setup
-At _Run > Edit Configurations..._ set `Environment variables: FLASK_RUN_PORT=5013`.
+In PyCharm at _Run > Edit Configurations..._ set  
+`Environment variables: FLASK_RUN_PORT=5013`.
 
 ### Python Packages
 Install packages as listed in [requirements.txt](https://github.com/PlanQK/qiskit-service/blob/master/requirements.txt).
@@ -81,8 +82,8 @@ Result.query.all()
 ```
 
 ### Queueing
-* Start redis Docker:
-`docker run -p 6379:6379 redis`
+* Start redis Docker via command line:  
+`docker run -p 5040:5040 redis --port 5040`
 
-* Start worker:
-`rq worker qiskit-service_execute`
+* Start worker via command line:  
+`rq worker --url redis://localhost:5040 qiskit-service_execute`
