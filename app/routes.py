@@ -115,8 +115,15 @@ def transpile_circuit():
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
         return jsonify({'error': 'too many qubits required'}), 200
 
-    app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width}, d={depth}, number of gates={total_number_of_gates}, number of multi qubit gates={number_of_multi_qubit_gates}")
-    return jsonify({'depth': depth, 'width': width, 'number-of-gates': total_number_of_gates, 'number-of-multi-qubit-gates': number_of_multi_qubit_gates, 'transpiled-qasm': transpiled_circuit.qasm()}), 200
+    app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width}, "
+                    f"d={depth}, "
+                    f"number of gates={total_number_of_gates}, "
+                    f"number of multi qubit gates={number_of_multi_qubit_gates}")
+    return jsonify({'depth': depth,
+                    'width': width,
+                    'number-of-gates': total_number_of_gates,
+                    'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
+                    'transpiled-qasm': transpiled_circuit.qasm()}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
