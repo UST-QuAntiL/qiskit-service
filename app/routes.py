@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import qiskit.circuit
 
 from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters
 from app.benchmark_model import Benchmark
@@ -23,8 +24,9 @@ from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
 from qiskit.transpiler.passes import RemoveFinalMeasurements
-from qiskit.converters import circuit_to_dag
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.transpiler.exceptions import TranspilerError
+from qiskit.circuit import Qubit
 import json
 import base64
 
@@ -111,15 +113,44 @@ def transpile_circuit():
         total_number_of_gates = transpiled_circuit.size()
         number_of_multi_qubit_gates = transpiled_circuit.num_nonlocal_gates()
 
+        print(transpiled_circuit)
+
+        # construct set of names of occurring multi-qubit gates, i.e. nonlocal gates
+        transpiled_dag = circuit_to_dag(transpiled_circuit)
+        set_of_all_nonlocal_gates = set()
+        for gate in transpiled_dag.multi_qubit_ops():
+            set_of_all_nonlocal_gates.add(gate.name)
+        for gate in transpiled_dag.two_qubit_ops():
+            set_of_all_nonlocal_gates.add(gate.name)
+        print(set_of_all_nonlocal_gates)
+
+        # remove all single qubit gates
+        # get all gates and check if they are single qubit gates
+        circuit_for_getting_multi_qubit_gate_depth = transpiled_circuit
+        for index, gate in enumerate(circuit_for_getting_multi_qubit_gate_depth.data):
+            gate_name = gate[0].name
+            print(gate_name)
+            if gate_name not in set_of_all_nonlocal_gates:
+                circuit_for_getting_multi_qubit_gate_depth.data.pop(index)
+
+        # remove measurement gates to get multi qubit gate depth
+        modified_dag_without_measurement = remove_final_meas\
+            .run(circuit_to_dag(circuit_for_getting_multi_qubit_gate_depth))
+        circuit_for_getting_multi_qubit_gate_depth = dag_to_circuit(modified_dag_without_measurement)
+        print(circuit_for_getting_multi_qubit_gate_depth)
+        multi_qubit_gate_depth = circuit_for_getting_multi_qubit_gate_depth.depth()
+
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
         return jsonify({'error': 'too many qubits required'}), 200
 
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width}, "
                     f"d={depth}, "
+                    f"multi qubit gate depth={multi_qubit_gate_depth}"
                     f"number of gates={total_number_of_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}")
     return jsonify({'depth': depth,
+                    'multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'width': width,
                     'number-of-gates': total_number_of_gates,
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
