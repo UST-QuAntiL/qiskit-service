@@ -127,16 +127,16 @@ def transpile_circuit():
         # remove all single qubit gates
         # get all gates and check if they are single qubit gates
         circuit_for_getting_multi_qubit_gate_depth = transpiled_circuit
-        for index, gate in enumerate(circuit_for_getting_multi_qubit_gate_depth.data):
+        i = 0
+        for gate in list(circuit_for_getting_multi_qubit_gate_depth.data):
             gate_name = gate[0].name
-            print(gate_name)
             if gate_name not in set_of_all_nonlocal_gates:
-                circuit_for_getting_multi_qubit_gate_depth.data.pop(index)
+                circuit_for_getting_multi_qubit_gate_depth.data.pop(i)
+            else:
+                # i is only incremented if the regarded gate (i.e. a nonlocal gate) is not removed,
+                # thus, the list size did not changed and go ahead to the next index
+                i = i + 1
 
-        # remove measurement gates to get multi qubit gate depth
-        modified_dag_without_measurement = remove_final_meas\
-            .run(circuit_to_dag(circuit_for_getting_multi_qubit_gate_depth))
-        circuit_for_getting_multi_qubit_gate_depth = dag_to_circuit(modified_dag_without_measurement)
         print(circuit_for_getting_multi_qubit_gate_depth)
         multi_qubit_gate_depth = circuit_for_getting_multi_qubit_gate_depth.depth()
 
@@ -146,7 +146,7 @@ def transpile_circuit():
 
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width}, "
                     f"d={depth}, "
-                    f"multi qubit gate depth={multi_qubit_gate_depth}"
+                    f"multi qubit gate depth={multi_qubit_gate_depth}, "
                     f"number of gates={total_number_of_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}")
     return jsonify({'depth': depth,
