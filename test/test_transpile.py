@@ -54,6 +54,14 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertGreaterEqual(json_data["number-of-gates"], 2)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
@@ -83,12 +91,20 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertGreaterEqual(json_data["number-of-gates"], 2)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_yorktown_file(self):
+    def test_transpile_shor_lima_file(self):
 
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
@@ -97,7 +113,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'Qiskit',
-            'qpu-name': "ibmq_5_yorktown",
+            'qpu-name': "ibmq_lima",
             'input-params': {},
             'token': token
         }
@@ -110,43 +126,57 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertLessEqual(json_data['depth'], 8)
-        self.assertEqual(json_data['width'], 3)
-
-        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
-        self.assertEqual(r.status_code, 202)
-        print(r.headers.get("Location"))
-
-    def test_transpile_shor_yorktown_url_qasm(self):
-
-        # prepare the request
-        token = qiskit.IBMQ.stored_account()['token']
-        request = {
-            'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
-            'impl-language': 'OpenQASM',
-            'qpu-name': "ibmq_5_yorktown",
-            'input-params': {},
-            'token': token
-        }
-
-        # send the request
-        response = self.client.post('/qiskit-service/api/v1.0/transpile',
-                                    json=request)
-
-        self.assertEqual(response.status_code, 200)
-        json_data = response.get_json()
-        self.assertIn("width", json_data)
-        self.assertIn("depth", json_data)
-        self.assertLessEqual(json_data['depth'], 8)
-        self.assertEqual(json_data['width'], 3)
+        self.assertGreaterEqual(json_data['depth'], 8)
+        self.assertGreaterEqual(json_data['width'], 3)
         self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertGreaterEqual(json_data["number-of-gates"], 10)
+        self.assertGreaterEqual(json_data["number-of-multi-qubit-gates"], 6)
+        self.assertGreaterEqual(json_data["multi-qubit-gate-depth"], 6)
         self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_yorktown_file_qasm(self):
+    def test_transpile_shor_lima_url_qasm(self):
+
+        # prepare the request
+        token = qiskit.IBMQ.stored_account()['token']
+        request = {
+            'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
+            'impl-language': 'OpenQASM',
+            'qpu-name': "ibmq_lima",
+            'input-params': {},
+            'token': token
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertGreaterEqual(json_data['depth'], 8)
+        self.assertGreaterEqual(json_data['width'], 4)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIsNotNone(json_data["number-of-gates"])
+        self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
+        self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
+
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
+
+    def test_transpile_shor_santiago_file_qasm(self):
 
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
@@ -155,7 +185,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'OpenQASM',
-            'qpu-name': "ibmq_5_yorktown",
+            'qpu-name': "ibmq_santiago",
             'input-params': {},
             'token': token
         }
@@ -168,8 +198,16 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertLessEqual(json_data['depth'], 8)
-        self.assertEqual(json_data['width'], 3)
+        self.assertLessEqual(json_data['depth'], 18)
+        self.assertLessEqual(json_data['width'], 7)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIsNotNone(json_data["number-of-gates"])
+        self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
+        self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
@@ -200,18 +238,26 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertGreater(json_data['depth'], 3000)
         self.assertEqual(json_data['width'], 18)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIsNotNone(json_data["number-of-gates"])
+        self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
+        self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_ibmq16(self):
+    def test_transpile_shor_santiago(self):
 
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
             'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
-            'qpu-name': "ibmq_16_melbourne",
+            'qpu-name': "ibmq_santiago",
             'input-params': {
                 'N': {
                     'rawValue': "9",
@@ -252,6 +298,14 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertEqual(json_data['depth'], 7)
         self.assertEqual(json_data['width'], 5)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIsNotNone(json_data["number-of-gates"])
+        self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
+        self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)

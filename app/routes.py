@@ -16,14 +16,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import qiskit.circuit
 
-from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters
+from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis
 from app.benchmark_model import Benchmark
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
-from qiskit.transpiler.passes import RemoveFinalMeasurements
-from qiskit.converters import circuit_to_dag
 from qiskit.transpiler.exceptions import TranspilerError
 import json
 import base64
@@ -77,12 +76,7 @@ def transpile_circuit():
 
     try:
         print(circuit)
-        remove_final_meas = RemoveFinalMeasurements()
-        active_qubits = [
-            qubit for qubit in circuit.qubits if
-            qubit not in remove_final_meas.run(circuit_to_dag(circuit)).idle_wires()
-        ]
-        non_transpiled_width = len(active_qubits)
+        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
         non_transpiled_depth = circuit.depth()
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
@@ -101,15 +95,13 @@ def transpile_circuit():
 
     try:
         transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
-        remove_final_meas = RemoveFinalMeasurements()
-        active_qubits = [
-            qubit for qubit in transpiled_circuit.qubits if
-            qubit not in remove_final_meas.run(circuit_to_dag(transpiled_circuit)).idle_wires()
-        ]
-        width = len(active_qubits)
+        width = circuit_analysis.get_width_of_circuit(transpiled_circuit)
         depth = transpiled_circuit.depth()
         total_number_of_gates = transpiled_circuit.size()
         number_of_multi_qubit_gates = transpiled_circuit.num_nonlocal_gates()
+        print("Transpiled Circuit")
+        print(transpiled_circuit)
+        multi_qubit_gate_depth = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
@@ -117,9 +109,11 @@ def transpile_circuit():
 
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width}, "
                     f"d={depth}, "
+                    f"multi qubit gate depth={multi_qubit_gate_depth}, "
                     f"number of gates={total_number_of_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}")
     return jsonify({'depth': depth,
+                    'multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'width': width,
                     'number-of-gates': total_number_of_gates,
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,

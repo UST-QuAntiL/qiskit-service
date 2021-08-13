@@ -21,7 +21,7 @@ docker-compose up
 Now the qiskit-service is available on http://localhost:5013/.
 
 ## Transpilation Request
-Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
+Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth, multi-qubit-gate depth, number of gates, number of multi-qubit gates, and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
 `POST /qiskit-service/api/v1.0/transpile`  
 
