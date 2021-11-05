@@ -95,12 +95,15 @@ def transpile_circuit():
 
     try:
         transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
-        width = circuit_analysis.get_width_of_circuit(transpiled_circuit)
-        depth = transpiled_circuit.depth()
-        total_number_of_gates = transpiled_circuit.size()
-        number_of_multi_qubit_gates = transpiled_circuit.num_nonlocal_gates()
         print("Transpiled Circuit")
         print(transpiled_circuit)
+        width = circuit_analysis.get_width_of_circuit(transpiled_circuit)
+        depth = transpiled_circuit.depth()
+        total_number_of_operations = transpiled_circuit.size()
+        number_of_multi_qubit_gates = transpiled_circuit.num_nonlocal_gates()
+        number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(transpiled_circuit)
+        number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - \
+                                       number_of_measurement_operations
         multi_qubit_gate_depth = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
 
     except TranspilerError:
@@ -110,13 +113,17 @@ def transpile_circuit():
     app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: w={width}, "
                     f"d={depth}, "
                     f"multi qubit gate depth={multi_qubit_gate_depth}, "
-                    f"number of gates={total_number_of_gates}, "
-                    f"number of multi qubit gates={number_of_multi_qubit_gates}")
+                    f"total number of operations={total_number_of_operations}, "
+                    f"number of single qubit gates={number_of_single_qubit_gates}, "
+                    f"number of multi qubit gates={number_of_multi_qubit_gates}, "
+                    f"number of measurement operations={number_of_measurement_operations}")
     return jsonify({'depth': depth,
                     'multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'width': width,
-                    'number-of-gates': total_number_of_gates,
+                    'total-number-of-operations': total_number_of_operations,
+                    'number-of-single-qubit-gates': number_of_single_qubit_gates,
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
+                    'number-of-measurement-operations': number_of_measurement_operations,
                     'transpiled-qasm': transpiled_circuit.qasm()}), 200
 
 

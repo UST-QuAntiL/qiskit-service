@@ -57,6 +57,10 @@ def get_multi_qubit_gate_depth(transpiled_circuit):
             # thus, the list size did not changed and go ahead to the next index
             i = i + 1
 
-    print("Multi Qubit Gate Depth Circuit")
-    print(circuit_for_getting_multi_qubit_gate_depth)
     return circuit_for_getting_multi_qubit_gate_depth.depth()
+
+
+def get_number_of_measurement_operations(transpiled_circuit):
+    """ Get number of measurement operations in the transpiled circuit """
+    transpiled_dag = circuit_to_dag(transpiled_circuit)
+    return transpiled_dag.count_ops().get('measure')
