@@ -23,6 +23,8 @@ from app import db
 class Result(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     result = db.Column(db.String(1200), default="")
+    backend = db.Column(db.String(1200), default="")
+    shots = db.Column(db.Integer, default=0)
     complete = db.Column(db.Boolean, default=False)
 
     def __repr__(self):

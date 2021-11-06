@@ -75,7 +75,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
     job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result, default=convertInSuitableFormat)
+        result.result = json.dumps(job_result['counts'])
         result.complete = True
         db.session.commit()
     else:
