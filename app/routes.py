@@ -104,7 +104,9 @@ def transpile_circuit():
         number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(transpiled_circuit)
         number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - \
                                        number_of_measurement_operations
-        multi_qubit_gate_depth = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
+        multi_qubit_gate_depth, transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
+        print("After all")
+        print(transpiled_circuit)
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")

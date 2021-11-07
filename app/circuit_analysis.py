@@ -17,7 +17,7 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from qiskit.converters import circuit_to_dag
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.transpiler.passes import RemoveFinalMeasurements
 
 
@@ -42,7 +42,6 @@ def get_multi_qubit_gate_depth(transpiled_circuit):
         set_of_all_nonlocal_gates.add(gate.name)
     for gate in transpiled_dag.two_qubit_ops():
         set_of_all_nonlocal_gates.add(gate.name)
-    print(set_of_all_nonlocal_gates)
 
     # remove all single qubit gates
     # get all gates and check if they are single qubit gates
@@ -57,7 +56,9 @@ def get_multi_qubit_gate_depth(transpiled_circuit):
             # thus, the list size did not changed and go ahead to the next index
             i = i + 1
 
-    return circuit_for_getting_multi_qubit_gate_depth.depth()
+    transpiled_circuit = dag_to_circuit(transpiled_dag)
+
+    return circuit_for_getting_multi_qubit_gate_depth.depth(), transpiled_circuit
 
 
 def get_number_of_measurement_operations(transpiled_circuit):
