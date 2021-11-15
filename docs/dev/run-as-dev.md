@@ -88,6 +88,21 @@ from app.result_model import Result
 Result.query.all()
 ```
 
+#### Update existing tables:
+Find the head using 
+```
+flask db history
+```
+Update the version_num field to the head version.  
+Run migrate using
+```
+flask db migrate
+```
+Upgrade the database 
+```
+flask db upgrade
+```
+
 ### Queueing
 * Start redis Docker via command line:  
 `docker run -p 5040:5040 redis --port 5040`

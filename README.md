@@ -1,6 +1,6 @@
 # qiskit-service
 
-This service takes a Qiskit or OpenQASM implementation as data or via an URL and returns either its depth, width and the transpiled OpenQASM String (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
+This service takes a Qiskit or OpenQASM implementation as data or via a URL and returns either compiled circuit properties and the transpiled OpenQASM String (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -21,7 +21,7 @@ docker-compose up
 Now the qiskit-service is available on http://localhost:5013/.
 
 ## Transpilation Request
-Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth, multi-qubit-gate depth, number of gates, number of multi-qubit gates, and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
+Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
 `POST /qiskit-service/api/v1.0/transpile`  
 
