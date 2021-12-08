@@ -29,8 +29,9 @@ from app.benchmark_model import Benchmark
 from app.result_model import Result
 
 
-def run(circuit, backend, token, shots, benchmark_id, original_depth, original_width, transpiled_depth,
-        transpiled_width):
+def run(circuit, backend, token, shots, benchmark_id, original_depth, original_width,
+        original_number_of_multi_qubit_gates, transpiled_depth, transpiled_width,
+        transpiled_number_of_multi_qubit_gates):
     """Enqueue jobs for randomized circuits for the execution and create database entries"""
     qasm = circuit.qasm()
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
@@ -44,8 +45,10 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     benchmark.backend = json.dumps(backend)
     benchmark.original_depth = original_depth
     benchmark.original_width = original_width
+    benchmark.original_number_of_multi_qubit_gates = original_number_of_multi_qubit_gates
     benchmark.transpiled_depth = transpiled_depth
     benchmark.transpiled_width = transpiled_width
+    benchmark.transpiled_number_of_multi_qubit_gates = transpiled_number_of_multi_qubit_gates
     benchmark.benchmark_id = benchmark_id
     db.session.commit()
 
@@ -67,6 +70,7 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
             benchmark_id = rowcount // 2
             # create randomized circuits and transpile them for both backends
             qx = random_circuit(num_qubits=num_of_qubits, depth=i, measure=True)
+            original_number_of_multi_qubit_gates = qx.num_nonlocal_gates()
             qcircuit_sim = transpile(qx, backend=backend_sim, optimization_level=3)
             qcircuit_real = transpile(qx, backend=backend_real, optimization_level=3)
             # ensure that the width of the circuit is correctly saved in the db
@@ -77,17 +81,24 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
             ]
             transpiled_depth_sim = qcircuit_sim.depth()
             transpiled_width_sim = qcircuit_sim.num_qubits
+            transpiled_number_of_multi_qubit_gates_sim = qcircuit_sim.num_nonlocal_gates()
             transpiled_depth_real = qcircuit_real.depth()
             transpiled_width_real = len(active_qubits_real)
+            transpiled_number_of_multi_qubit_gates_real = qcircuit_real.num_nonlocal_gates()
 
             location_sim = run(circuit=qcircuit_sim, backend=sim_name, token=token, shots=shots,
                                benchmark_id=benchmark_id,
-                               original_depth=i, original_width=num_of_qubits, transpiled_depth=transpiled_depth_sim,
-                               transpiled_width=transpiled_width_sim)
+                               original_depth=i, original_width=num_of_qubits,
+                               original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                               transpiled_depth=transpiled_depth_sim, transpiled_width=transpiled_width_sim,
+                               transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_sim)
+
             location_real = run(circuit=qcircuit_real, backend=qpu_name, token=token, shots=shots,
                                 benchmark_id=benchmark_id,
-                                original_depth=i, original_width=num_of_qubits, transpiled_depth=transpiled_depth_real,
-                                transpiled_width=transpiled_width_real)
+                                original_depth=i, original_width=num_of_qubits,
+                                original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                                transpiled_depth=transpiled_depth_real, transpiled_width=transpiled_width_real,
+                                transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_real)
             location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
             locations.append({'Result simulator': str(location_sim),
                               'Result real backend': str(location_real),
@@ -135,6 +146,7 @@ def analyse():
             list.append({"Benchmark " + str(benchmarks[i].benchmark_id): {
                 "Transpiled Depth": benchmarks[i + 1].transpiled_depth,
                 "Transpiled Width": benchmarks[i + 1].transpiled_width,
+                "Transpiled Number Of Multi Qubit Gates": benchmarks[i + 1].transpiled_number_of_multi_qubit_gates,
                 "Counts Sim": counts_sim,
                 # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
