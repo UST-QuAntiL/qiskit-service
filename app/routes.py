@@ -195,10 +195,10 @@ def randomize():
         abort(400)
 
     qpu_name = request.json['qpu-name']
-    num_of_qubits = request.json['number_of_qubits']
-    min_depth_of_circuit = request.json['min_depth_of_circuit']
-    max_depth_of_circuit = request.json['max_depth_of_circuit']
-    num_of_circuits = request.json['number_of_circuits']
+    num_of_qubits = request.json['number-of-qubits']
+    min_depth_of_circuit = request.json['min-depth-of-circuit']
+    max_depth_of_circuit = request.json['max-depth-of-circuit']
+    num_of_circuits = request.json['number-of-circuits']
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 
@@ -244,20 +244,24 @@ def get_benchmark(benchmark_id):
             # both backends finished execution
             return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
                              'counts': json.loads(benchmark_sim.counts),
-                             'original_depth': benchmark_sim.original_depth,
-                             'original_width': benchmark_sim.original_width,
-                             'transpiled_depth': benchmark_sim.transpiled_depth,
-                             'transpiled_width': benchmark_sim.transpiled_width,
-                             'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                             'original-depth': benchmark_sim.original_depth,
+                             'original-width': benchmark_sim.original_width,
+                             'original-number-of-multi-qubit-gates': benchmark_sim.original_number_of_multi_qubit_gates,
+                             'transpiled-depth': benchmark_sim.transpiled_depth,
+                             'transpiled-width': benchmark_sim.transpiled_width,
+                             'transpiled-number-of-multi-qubit-gates': benchmark_sim.transpiled_number_of_multi_qubit_gates,
+                             'benchmark-id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
                              'shots': benchmark_sim.shots
                              },
                             {'id': benchmark_real.id, 'backend': json.loads(benchmark_real.backend),
                              'counts': json.loads(benchmark_real.counts),
-                             'original_depth': benchmark_real.original_depth,
-                             'original_width': benchmark_real.original_width,
-                             'transpiled_depth': benchmark_real.transpiled_depth,
-                             'transpiled_width': benchmark_real.transpiled_width,
-                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'original-depth': benchmark_real.original_depth,
+                             'original-width': benchmark_real.original_width,
+                             'original-number-of-multi-qubit-gates': benchmark_real.original_number_of_multi_qubit_gates,
+                             'transpiled-depth': benchmark_real.transpiled_depth,
+                             'transpiled-width': benchmark_real.transpiled_width,
+                             'transpiled-number-of-multi-qubit-gates': benchmark_real.transpiled_number_of_multi_qubit_gates,
+                             'benchmark-id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
                              'shots': benchmark_real.shots
                              }]), 200
 
@@ -269,10 +273,12 @@ def get_benchmark(benchmark_id):
             # simulator finished execution, quantum computer not yet
             return jsonify(
                 [{'id': benchmark_sim.id, 'backend': benchmark_sim.backend, 'counts': json.loads(benchmark_sim.counts),
-                  'original_depth': benchmark_sim.original_depth, 'original_width': benchmark_sim.original_width,
-                  'transpiled_depth': benchmark_sim.transpiled_depth,
-                  'transpiled_width': benchmark_sim.transpiled_width,
-                  'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                  'original-depth': benchmark_sim.original_depth, 'original-width': benchmark_sim.original_width,
+                  'original-number-of-multi-qubit-gates': benchmark_sim.original_number_of_multi_qubit_gates,
+                  'transpiled-depth': benchmark_sim.transpiled_depth,
+                  'transpiled-width': benchmark_sim.transpiled_width,
+                  'transpiled-number-of-multi-qubit-gates': benchmark_sim.transpiled_number_of_multi_qubit_gates,
+                  'benchmark-id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
                   'shots': benchmark_sim.shots
                   },
                  {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
@@ -286,11 +292,13 @@ def get_benchmark(benchmark_id):
             return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
                             {'id': benchmark_real.id, 'backend': benchmark_real.backend,
                              'counts': json.loads(benchmark_real.counts),
-                             'original_depth': benchmark_real.original_depth,
-                             'original_width': benchmark_real.original_width,
-                             'transpiled_depth': benchmark_real.transpiled_depth,
-                             'transpiled_width': benchmark_real.transpiled_width,
-                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'original-depth': benchmark_real.original_depth,
+                             'original-width': benchmark_real.original_width,
+                             'original-number-of-multi-qubit-gates': benchmark_real.original_number_of_multi_qubit_gates,
+                             'transpiled-depth': benchmark_real.transpiled_depth,
+                             'transpiled-width': benchmark_real.transpiled_width,
+                             'transpiled-number-of-multi-qubit-gates': benchmark_real.transpiled_number_of_multi_qubit_gates,
+                             'benchmark-id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
                              'shots': benchmark_real.shots
                              }]), 200
         else:

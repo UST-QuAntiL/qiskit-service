@@ -55,10 +55,10 @@ class TranspileTestCase(unittest.TestCase):
         token = qiskit.IBMQ.stored_account()['token']
         request = {
             'qpu-name': 'ibmq_qasm_simulator',
-            'number_of_qubits': 1,
-            'min_depth_of_circuit': 1,
-            'max_depth_of_circuit': 1,
-            'number_of_circuits': 1,
+            'number-of-qubits': 1,
+            'min-depth-of-circuit': 1,
+            'max-depth-of-circuit': 1,
+            'number-of-circuits': 1,
             'shots': 1024,
             'token': token
         }
@@ -71,9 +71,9 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(1, len(json_data))
         self.assertEqual(3, len(json_data[0]))
         print(json_data[0])
-        self.assertIn("Result benchmark", json_data[0])
-        self.assertIn("Result simulator", json_data[0])
-        self.assertIn("Result real backend", json_data[0])
+        self.assertIn("result-benchmark", json_data[0])
+        self.assertIn("result-simulator", json_data[0])
+        self.assertIn("result-real-backend", json_data[0])
 
 
     def test_randomize_no_shots_request(self):
@@ -82,10 +82,10 @@ class TranspileTestCase(unittest.TestCase):
         token = qiskit.IBMQ.stored_account()['token']
         request = {
             'qpu-name': 'ibmq_qasm_simulator',
-            'number_of_qubits': 1,
-            'min_depth_of_circuit': 1,
-            'max_depth_of_circuit': 1,
-            'number_of_circuits': 1,
+            'number-of-qubits': 1,
+            'min-depth-of-circuit': 1,
+            'max-depth-of-circuit': 1,
+            'number-of-circuits': 1,
             'token': token
         }
 
@@ -96,9 +96,9 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertEqual(1, len(json_data))
         self.assertEqual(3, len(json_data[0]))
-        self.assertIn("Result benchmark", json_data[0])
-        self.assertIn("Result simulator", json_data[0])
-        self.assertIn("Result real backend", json_data[0])
+        self.assertIn("result-benchmark", json_data[0])
+        self.assertIn("result-simulator", json_data[0])
+        self.assertIn("result-real-backend", json_data[0])
 
 
 if __name__ == "__main__":

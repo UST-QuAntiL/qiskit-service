@@ -100,9 +100,9 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
                                 transpiled_depth=transpiled_depth_real, transpiled_width=transpiled_width_real,
                                 transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_real)
             location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
-            locations.append({'Result simulator': str(location_sim),
-                              'Result real backend': str(location_real),
-                              'Result benchmark': str(location_benchmark)})
+            locations.append({'result-simulator': str(location_sim),
+                              'result-real-backend': str(location_real),
+                              'result-benchmark': str(location_benchmark)})
 
     return locations
 
@@ -143,19 +143,19 @@ def analyse():
             correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
             chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
-            list.append({"Benchmark " + str(benchmarks[i].benchmark_id): {
-                "Transpiled Depth": benchmarks[i + 1].transpiled_depth,
-                "Transpiled Width": benchmarks[i + 1].transpiled_width,
-                "Transpiled Number Of Multi Qubit Gates": benchmarks[i + 1].transpiled_number_of_multi_qubit_gates,
-                "Counts Sim": counts_sim,
+            list.append({"benchmark-" + str(benchmarks[i].benchmark_id): {
+                "transpiled-depth": benchmarks[i + 1].transpiled_depth,
+                "transpiled-width": benchmarks[i + 1].transpiled_width,
+                "transpiled-number-of-multi-qubit-gates": benchmarks[i + 1].transpiled_number_of_multi_qubit_gates,
+                "counts-sim": counts_sim,
                 # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
-                "Counts Real": counts_real,
+                "counts-real": counts_real,
                 # "Expected Value Real": exp_value_real,
                 # "Standard Deviation Real": sd_real,
-                "Percentage Error": perc_error,
-                "Chi Square": chi_square,
-                "Correlation": correlation,
-                "Intersection": intersection}
+                "percentage-error": perc_error,
+                "chi-square": chi_square,
+                "correlation": correlation,
+                "intersection": intersection}
             })
     return list
