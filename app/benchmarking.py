@@ -143,19 +143,17 @@ def analyse():
             correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
             chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
-            list.append({"benchmark-" + str(benchmarks[i].benchmark_id): {
-                "transpiled-depth": benchmarks[i + 1].transpiled_depth,
-                "transpiled-width": benchmarks[i + 1].transpiled_width,
-                "transpiled-number-of-multi-qubit-gates": benchmarks[i + 1].transpiled_number_of_multi_qubit_gates,
-                "counts-sim": counts_sim,
+            list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
+                'benchmark': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
+                'counts-sim': counts_sim,
                 # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
-                "counts-real": counts_real,
+                'counts-real': counts_real,
                 # "Expected Value Real": exp_value_real,
                 # "Standard Deviation Real": sd_real,
-                "percentage-error": perc_error,
-                "chi-square": chi_square,
-                "correlation": correlation,
-                "intersection": intersection}
+                'percentage-error': perc_error,
+                'chi-square': chi_square,
+                'correlation': correlation,
+                'intersection': intersection}
             })
     return list
