@@ -17,7 +17,7 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis
+from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
 from app.benchmark_model import Benchmark
 from app.result_model import Result
 from flask import jsonify, abort, request
@@ -243,6 +243,17 @@ def get_benchmark(benchmark_id):
             # both backends finished execution
             return jsonify({'id': int(benchmark_id),
                             'benchmarking-complete': True,
+                            'histogram-intersection': analysis.calc_intersection(
+                                json.loads(benchmark_sim.counts).copy(),
+                                json.loads(benchmark_real.counts).copy(),
+                                benchmark_real.shots),
+                            'perc-error': analysis.calc_percentage_error(json.loads(benchmark_sim.counts),
+                                                                         json.loads(benchmark_real.counts)),
+                            'correlation': analysis.calc_correlation(json.loads(benchmark_sim.counts).copy(),
+                                                                     json.loads(benchmark_real.counts).copy(),
+                                                                     benchmark_real.shots),
+                            'chi-square': analysis.calc_chi_square_distance(json.loads(benchmark_sim.counts).copy(),
+                                                                            json.loads(benchmark_real.counts).copy()),
                             'benchmarking-results': [get_benchmark_body(benchmark_backend=benchmark_sim),
                                                      get_benchmark_body(benchmark_backend=benchmark_real)]}), 200
 

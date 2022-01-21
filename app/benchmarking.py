@@ -144,7 +144,7 @@ def analyse():
             chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
             list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
-                'benchmark': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
+                'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
                 'counts-sim': counts_sim,
                 # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
@@ -154,6 +154,6 @@ def analyse():
                 'percentage-error': perc_error,
                 'chi-square': chi_square,
                 'correlation': correlation,
-                'intersection': intersection}
+                'histogram-intersection': intersection}
             })
     return list
