@@ -16,7 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-import qiskit.circuit
 
 from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis
 from app.benchmark_model import Benchmark
@@ -230,7 +229,7 @@ def get_benchmark(benchmark_id):
     benchmark_real = None
     # get the simulator's and quantum computer's result from the db
     for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
-        if json.loads(benchmark.backend) == 'ibmq_qasm_simulator':
+        if benchmark.backend == 'ibmq_qasm_simulator':
             benchmark_sim = benchmark
         else:
             benchmark_real = benchmark
@@ -242,7 +241,9 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # both backends finished execution
-            return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
+            return jsonify([{'id': benchmark_sim.id,
+                             'sim-result': '/qiskit-service/api/v1.0/results/' + benchmark_sim.id,
+                             'backend': benchmark_sim.backend,
                              'counts': json.loads(benchmark_sim.counts),
                              'original-depth': benchmark_sim.original_depth,
                              'original-width': benchmark_sim.original_width,
@@ -250,10 +251,13 @@ def get_benchmark(benchmark_id):
                              'transpiled-depth': benchmark_sim.transpiled_depth,
                              'transpiled-width': benchmark_sim.transpiled_width,
                              'transpiled-number-of-multi-qubit-gates': benchmark_sim.transpiled_number_of_multi_qubit_gates,
-                             'benchmark-id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
+                             'benchmark-id': benchmark_sim.benchmark_id,
+                             'complete': benchmark_sim.complete,
                              'shots': benchmark_sim.shots
                              },
-                            {'id': benchmark_real.id, 'backend': json.loads(benchmark_real.backend),
+                            {'id': benchmark_real.id,
+                             'real-backend-result': '/qiskit-service/api/v1.0/results/' + benchmark_real.id,
+                             'backend': benchmark_real.backend,
                              'counts': json.loads(benchmark_real.counts),
                              'original-depth': benchmark_real.original_depth,
                              'original-width': benchmark_real.original_width,
@@ -261,7 +265,8 @@ def get_benchmark(benchmark_id):
                              'transpiled-depth': benchmark_real.transpiled_depth,
                              'transpiled-width': benchmark_real.transpiled_width,
                              'transpiled-number-of-multi-qubit-gates': benchmark_real.transpiled_number_of_multi_qubit_gates,
-                             'benchmark-id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
+                             'benchmark-id': benchmark_real.benchmark_id,
+                             'complete': benchmark_real.complete,
                              'shots': benchmark_real.shots
                              }]), 200
 

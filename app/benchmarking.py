@@ -37,19 +37,19 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
                                     shots=shots)
     # save benchmark properties to db
-    result = Result(id=job.get_id())
-    benchmark = Benchmark(id=job.get_id())
+    result = Result(id=job.get_id(), backend=backend, shots=shots)
+    benchmark = Benchmark(id=job.get_id(),
+                          backend=backend,
+                          shots=shots,
+                          original_depth=original_depth,
+                          original_width=original_width,
+                          original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                          transpiled_depth=transpiled_depth,
+                          transpiled_width=transpiled_width,
+                          transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates,
+                          benchmark_id=benchmark_id)
     db.session.add(result)
     db.session.add(benchmark)
-    benchmark.shots = shots
-    benchmark.backend = json.dumps(backend)
-    benchmark.original_depth = original_depth
-    benchmark.original_width = original_width
-    benchmark.original_number_of_multi_qubit_gates = original_number_of_multi_qubit_gates
-    benchmark.transpiled_depth = transpiled_depth
-    benchmark.transpiled_width = transpiled_width
-    benchmark.transpiled_number_of_multi_qubit_gates = transpiled_number_of_multi_qubit_gates
-    benchmark.benchmark_id = benchmark_id
     db.session.commit()
 
     content_location = '/qiskit-service/api/v1.0/results/' + result.id
