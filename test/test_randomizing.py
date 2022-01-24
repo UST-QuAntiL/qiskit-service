@@ -52,7 +52,6 @@ class TranspileTestCase(unittest.TestCase):
     def test_randomize_full_request(self):
 
         # prepare the request
-        token = qiskit.IBMQ.stored_account()['token']
         request = {
             'qpu-name': 'ibmq_qasm_simulator',
             'number-of-qubits': 1,
@@ -60,7 +59,7 @@ class TranspileTestCase(unittest.TestCase):
             'max-depth-of-circuit': 1,
             'number-of-circuits': 1,
             'shots': 1024,
-            'token': token
+            'token': os.environ["QISKIT_TOKEN"]
         }
 
         # send the request
@@ -79,14 +78,13 @@ class TranspileTestCase(unittest.TestCase):
     def test_randomize_no_shots_request(self):
 
         # prepare the request
-        token = qiskit.IBMQ.stored_account()['token']
         request = {
             'qpu-name': 'ibmq_qasm_simulator',
             'number-of-qubits': 1,
             'min-depth-of-circuit': 1,
             'max-depth-of-circuit': 1,
             'number-of-circuits': 1,
-            'token': token
+            'token': os.environ["QISKIT_TOKEN"]
         }
 
         # send the request
