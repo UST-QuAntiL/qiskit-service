@@ -28,8 +28,14 @@ import qiskit
 qiskit.IBMQ.save_account(TOKEN)
 ```
 
-### PlanQK token
-To run the tests store your bearer token as environment variable:
+### Test setup
+To run the tests store your bearer token as environment variable:  
+```
+QISKIT_TOKEN=***your-qiskit-token***
+```
+
+#### PlanQK token
+To run PlanQK-related tests store your bearer token as environment variable:
 ```
 BEARER_TOKEN=***your-bearer-token***
 ```
@@ -38,7 +44,7 @@ or like this with quotes if you run it from the command line:
 export BEARER_TOKEN="***your-bearer-token***"
 ```
 
-#### Example request with bearer token
+##### Example request with bearer token
 If you want to make a request with an impl-url from the PlanQK platform, you need to provide your bearer token like this:
 ```
 {  
