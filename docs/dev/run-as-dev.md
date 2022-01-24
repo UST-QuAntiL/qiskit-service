@@ -29,7 +29,7 @@ qiskit.IBMQ.save_account(TOKEN)
 ```
 
 ### Test setup
-To run the tests store your bearer token as environment variable:  
+To run the tests store your Qiskit token as environment variable:  
 ```
 QISKIT_TOKEN=***your-qiskit-token***
 ```
