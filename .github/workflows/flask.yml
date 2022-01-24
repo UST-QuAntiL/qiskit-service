@@ -22,5 +22,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt;
     - name: Run tests
+      env:
+        QISKIT_TOKEN: ${{ secrets.QISKIT_TOKEN }}
       run: |
-        python -m unittest test/test_analysis.py
+        python -m unittest discover test
