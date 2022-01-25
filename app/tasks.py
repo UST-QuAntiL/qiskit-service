@@ -117,7 +117,6 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
         result.complete = True
 
         benchmark = Benchmark.query.get(job.get_id())
-        benchmark.backend = json.dumps(qpu_name)
         benchmark.result = json.dumps(job_result, default=convertInSuitableFormat)
         benchmark.counts = json.dumps(job_result['counts'])
         benchmark.complete = True

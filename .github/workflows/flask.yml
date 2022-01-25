@@ -21,3 +21,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt;
+    - name: Run tests
+      env:
+        QISKIT_TOKEN: ${{ secrets.QISKIT_TOKEN }}
+      run: |
+        docker run -d -p 5040:5040 redis --port 5040
+        sleep 5
+        rq worker --url redis://localhost:5040 qiskit-service_execute &
+        sleep 5
+        python -m unittest discover test

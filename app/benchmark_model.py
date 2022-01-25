@@ -29,8 +29,10 @@ class Benchmark(db.Model):
     shots = db.Column(db.Integer)
     original_depth = db.Column(db.Integer)
     original_width = db.Column(db.Integer)
+    original_number_of_multi_qubit_gates = db.Column(db.Integer)
     transpiled_depth = db.Column(db.Integer)
     transpiled_width = db.Column(db.Integer)
+    transpiled_number_of_multi_qubit_gates = db.Column(db.Integer)
     complete = db.Column(db.Boolean, default=False)
 
     def __repr__(self):

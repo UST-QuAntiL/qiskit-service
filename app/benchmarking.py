@@ -29,24 +29,27 @@ from app.benchmark_model import Benchmark
 from app.result_model import Result
 
 
-def run(circuit, backend, token, shots, benchmark_id, original_depth, original_width, transpiled_depth,
-        transpiled_width):
+def run(circuit, backend, token, shots, benchmark_id, original_depth, original_width,
+        original_number_of_multi_qubit_gates, transpiled_depth, transpiled_width,
+        transpiled_number_of_multi_qubit_gates):
     """Enqueue jobs for randomized circuits for the execution and create database entries"""
     qasm = circuit.qasm()
     job = app.execute_queue.enqueue('app.tasks.execute_benchmark', transpiled_qasm=qasm, qpu_name=backend, token=token,
                                     shots=shots)
     # save benchmark properties to db
-    result = Result(id=job.get_id())
-    benchmark = Benchmark(id=job.get_id())
+    result = Result(id=job.get_id(), backend=backend, shots=shots)
+    benchmark = Benchmark(id=job.get_id(),
+                          backend=backend,
+                          shots=shots,
+                          original_depth=original_depth,
+                          original_width=original_width,
+                          original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                          transpiled_depth=transpiled_depth,
+                          transpiled_width=transpiled_width,
+                          transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates,
+                          benchmark_id=benchmark_id)
     db.session.add(result)
     db.session.add(benchmark)
-    benchmark.shots = shots
-    benchmark.backend = json.dumps(backend)
-    benchmark.original_depth = original_depth
-    benchmark.original_width = original_width
-    benchmark.transpiled_depth = transpiled_depth
-    benchmark.transpiled_width = transpiled_width
-    benchmark.benchmark_id = benchmark_id
     db.session.commit()
 
     content_location = '/qiskit-service/api/v1.0/results/' + result.id
@@ -67,6 +70,7 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
             benchmark_id = rowcount // 2
             # create randomized circuits and transpile them for both backends
             qx = random_circuit(num_qubits=num_of_qubits, depth=i, measure=True)
+            original_number_of_multi_qubit_gates = qx.num_nonlocal_gates()
             qcircuit_sim = transpile(qx, backend=backend_sim, optimization_level=3)
             qcircuit_real = transpile(qx, backend=backend_real, optimization_level=3)
             # ensure that the width of the circuit is correctly saved in the db
@@ -77,21 +81,28 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
             ]
             transpiled_depth_sim = qcircuit_sim.depth()
             transpiled_width_sim = qcircuit_sim.num_qubits
+            transpiled_number_of_multi_qubit_gates_sim = qcircuit_sim.num_nonlocal_gates()
             transpiled_depth_real = qcircuit_real.depth()
             transpiled_width_real = len(active_qubits_real)
+            transpiled_number_of_multi_qubit_gates_real = qcircuit_real.num_nonlocal_gates()
 
             location_sim = run(circuit=qcircuit_sim, backend=sim_name, token=token, shots=shots,
                                benchmark_id=benchmark_id,
-                               original_depth=i, original_width=num_of_qubits, transpiled_depth=transpiled_depth_sim,
-                               transpiled_width=transpiled_width_sim)
+                               original_depth=i, original_width=num_of_qubits,
+                               original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                               transpiled_depth=transpiled_depth_sim, transpiled_width=transpiled_width_sim,
+                               transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_sim)
+
             location_real = run(circuit=qcircuit_real, backend=qpu_name, token=token, shots=shots,
                                 benchmark_id=benchmark_id,
-                                original_depth=i, original_width=num_of_qubits, transpiled_depth=transpiled_depth_real,
-                                transpiled_width=transpiled_width_real)
+                                original_depth=i, original_width=num_of_qubits,
+                                original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                                transpiled_depth=transpiled_depth_real, transpiled_width=transpiled_width_real,
+                                transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_real)
             location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
-            locations.append({'Result simulator': str(location_sim),
-                              'Result real backend': str(location_real),
-                              'Result benchmark': str(location_benchmark)})
+            locations.append({'result-simulator': str(location_sim),
+                              'result-real-backend': str(location_real),
+                              'result-benchmark': str(location_benchmark)})
 
     return locations
 
@@ -132,18 +143,17 @@ def analyse():
             correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
             chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
-            list.append({"Benchmark " + str(benchmarks[i].benchmark_id): {
-                "Transpiled Depth": benchmarks[i + 1].transpiled_depth,
-                "Transpiled Width": benchmarks[i + 1].transpiled_width,
-                "Counts Sim": counts_sim,
+            list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
+                'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
+                'counts-sim': counts_sim,
                 # "Expected Value Sim": exp_value_sim,
                 # "Standard Deviation Sim": sd_sim,
-                "Counts Real": counts_real,
+                'counts-real': counts_real,
                 # "Expected Value Real": exp_value_real,
                 # "Standard Deviation Real": sd_real,
-                "Percentage Error": perc_error,
-                "Chi Square": chi_square,
-                "Correlation": correlation,
-                "Intersection": intersection}
+                'percentage-error': perc_error,
+                'chi-square': chi_square,
+                'correlation': correlation,
+                'histogram-intersection': intersection}
             })
     return list

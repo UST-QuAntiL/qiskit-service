@@ -16,9 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-import qiskit.circuit
 
-from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis
+from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
 from app.benchmark_model import Benchmark
 from app.result_model import Result
 from flask import jsonify, abort, request
@@ -195,10 +194,10 @@ def randomize():
         abort(400)
 
     qpu_name = request.json['qpu-name']
-    num_of_qubits = request.json['number_of_qubits']
-    min_depth_of_circuit = request.json['min_depth_of_circuit']
-    max_depth_of_circuit = request.json['max_depth_of_circuit']
-    num_of_circuits = request.json['number_of_circuits']
+    num_of_qubits = request.json['number-of-qubits']
+    min_depth_of_circuit = request.json['min-depth-of-circuit']
+    max_depth_of_circuit = request.json['max-depth-of-circuit']
+    num_of_circuits = request.json['number-of-circuits']
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 
@@ -230,7 +229,7 @@ def get_benchmark(benchmark_id):
     benchmark_real = None
     # get the simulator's and quantum computer's result from the db
     for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
-        if json.loads(benchmark.backend) == 'ibmq_qasm_simulator':
+        if benchmark.backend == 'ibmq_qasm_simulator':
             benchmark_sim = benchmark
         else:
             benchmark_real = benchmark
@@ -242,24 +241,21 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # both backends finished execution
-            return jsonify([{'id': benchmark_sim.id, 'backend': json.loads(benchmark_sim.backend),
-                             'counts': json.loads(benchmark_sim.counts),
-                             'original_depth': benchmark_sim.original_depth,
-                             'original_width': benchmark_sim.original_width,
-                             'transpiled_depth': benchmark_sim.transpiled_depth,
-                             'transpiled_width': benchmark_sim.transpiled_width,
-                             'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
-                             'shots': benchmark_sim.shots
-                             },
-                            {'id': benchmark_real.id, 'backend': json.loads(benchmark_real.backend),
-                             'counts': json.loads(benchmark_real.counts),
-                             'original_depth': benchmark_real.original_depth,
-                             'original_width': benchmark_real.original_width,
-                             'transpiled_depth': benchmark_real.transpiled_depth,
-                             'transpiled_width': benchmark_real.transpiled_width,
-                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
-                             'shots': benchmark_real.shots
-                             }]), 200
+            return jsonify({'id': int(benchmark_id),
+                            'benchmarking-complete': True,
+                            'histogram-intersection': analysis.calc_intersection(
+                                json.loads(benchmark_sim.counts).copy(),
+                                json.loads(benchmark_real.counts).copy(),
+                                benchmark_real.shots),
+                            'perc-error': analysis.calc_percentage_error(json.loads(benchmark_sim.counts),
+                                                                         json.loads(benchmark_real.counts)),
+                            'correlation': analysis.calc_correlation(json.loads(benchmark_sim.counts).copy(),
+                                                                     json.loads(benchmark_real.counts).copy(),
+                                                                     benchmark_real.shots),
+                            'chi-square': analysis.calc_chi_square_distance(json.loads(benchmark_sim.counts).copy(),
+                                                                            json.loads(benchmark_real.counts).copy()),
+                            'benchmarking-results': [get_benchmark_body(benchmark_backend=benchmark_sim),
+                                                     get_benchmark_body(benchmark_backend=benchmark_real)]}), 200
 
         elif benchmark_sim.complete and not benchmark_real.complete:
             if benchmark_sim.result == "":
@@ -267,15 +263,11 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # simulator finished execution, quantum computer not yet
-            return jsonify(
-                [{'id': benchmark_sim.id, 'backend': benchmark_sim.backend, 'counts': json.loads(benchmark_sim.counts),
-                  'original_depth': benchmark_sim.original_depth, 'original_width': benchmark_sim.original_width,
-                  'transpiled_depth': benchmark_sim.transpiled_depth,
-                  'transpiled_width': benchmark_sim.transpiled_width,
-                  'benchmark_id': benchmark_sim.benchmark_id, 'complete': benchmark_sim.complete,
-                  'shots': benchmark_sim.shots
-                  },
-                 {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
+            return jsonify({'id': int(benchmark_id),
+                            'benchmarking-complete': False,
+                            'benchmarking-results': [get_benchmark_body(benchmark_backend=benchmark_sim),
+                                                     {'result-id': benchmark_real.id,
+                                                      'complete': benchmark_real.complete}]}), 200
 
         elif not benchmark_sim.complete and benchmark_real.complete:
             if benchmark_real.result == "":
@@ -283,20 +275,19 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # quantum computer finished execution, simulator not yet
-            return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
-                            {'id': benchmark_real.id, 'backend': benchmark_real.backend,
-                             'counts': json.loads(benchmark_real.counts),
-                             'original_depth': benchmark_real.original_depth,
-                             'original_width': benchmark_real.original_width,
-                             'transpiled_depth': benchmark_real.transpiled_depth,
-                             'transpiled_width': benchmark_real.transpiled_width,
-                             'benchmark_id': benchmark_real.benchmark_id, 'complete': benchmark_real.complete,
-                             'shots': benchmark_real.shots
-                             }]), 200
+            return jsonify({'id': int(benchmark_id),
+                            'benchmarking-complete': False,
+                            'benchmarking-results': [{'result-id': benchmark_sim.id,
+                                                      'complete': benchmark_sim.complete},
+                                                     get_benchmark_body(benchmark_backend=benchmark_real)]}), 200
         else:
             # both backends did not finish execution yet
-            return jsonify([{'id': benchmark_sim.id, 'complete': benchmark_sim.complete},
-                            {'id': benchmark_real.id, 'complete': benchmark_real.complete}]), 200
+            return jsonify({'id': int(benchmark_id),
+                            'benchmarking-complete': False,
+                            'benchmarking-results': [{'result-id': benchmark_sim.id,
+                                                      'complete': benchmark_sim.complete},
+                                                     {'result-id': benchmark_real.id,
+                                                      'complete': benchmark_real.complete}]}), 200
     else:
         abort(404)
 
@@ -310,3 +301,20 @@ def get_analysis():
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
 def version():
     return jsonify({'version': '1.0'})
+
+
+def get_benchmark_body(benchmark_backend):
+    return {'result-id': benchmark_backend.id,
+            'result-location': '/qiskit-service/api/v1.0/results/' + benchmark_backend.id,
+            'backend': benchmark_backend.backend,
+            'counts': json.loads(benchmark_backend.counts),
+            'original-depth': benchmark_backend.original_depth,
+            'original-width': benchmark_backend.original_width,
+            'original-number-of-multi-qubit-gates': benchmark_backend.original_number_of_multi_qubit_gates,
+            'transpiled-depth': benchmark_backend.transpiled_depth,
+            'transpiled-width': benchmark_backend.transpiled_width,
+            'transpiled-number-of-multi-qubit-gates': benchmark_backend.transpiled_number_of_multi_qubit_gates,
+            'benchmark-id': benchmark_backend.benchmark_id,
+            'complete': benchmark_backend.complete,
+            'shots': benchmark_backend.shots
+            }
