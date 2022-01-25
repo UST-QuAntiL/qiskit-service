@@ -168,17 +168,17 @@ The response also contains a link to the summary of the benchmark.
 ```
 {  
     "qpu-name": "NAME-OF-QPU",
-    "number_of_qubits": "NUMBER-OF-QUBITS",
-    "min_depth_of_circuit": "MIN-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
-    "max_depth_of_circuit": "MAX-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
-    "number_of_circuits": "NUMBER-OF-CIRCUITS",
+    "number-of-qubits": "NUMBER-OF-QUBITS",
+    "min-depth-of-circuit": "MIN-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
+    "max-depth-of-circuit": "MAX-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
+    "number-of-circuits": "NUMBER-OF-CIRCUITS",
     "shots": "NUMBER-OF-SHOTS",
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
 
-Please make sure that ```number_of_qubits```, ```number_of_circuits``` and ```min_depth_of_circuit``` are greater than 0.
-Also, ```max_depth_of_cicuit``` has to be greater or equal to ```min_depth_of_circuit```.
+Please make sure that ```number-of-qubits```, ```number-of-circuits``` and ```min-depth-of-circuit``` are greater than 0.
+Also, ```max-depth-of-cicuit``` has to be greater or equal to ```min-depth-of-circuit```.
 
 Returns a list of links to the results on both backends, and a link to the benchmark result which returns corresponding
 executions on simulator and real quantum computer.
