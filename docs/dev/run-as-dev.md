@@ -44,7 +44,7 @@ or like this with quotes if you run it from the command line:
 export BEARER_TOKEN="***your-bearer-token***"
 ```
 
-##### Example request with bearer token
+### PlanQK token: Example request with bearer token
 If you want to make a request with an impl-url from the PlanQK platform, you need to provide your bearer token like this:
 ```
 {  
