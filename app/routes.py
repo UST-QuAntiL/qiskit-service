@@ -228,9 +228,11 @@ def get_benchmark(benchmark_id):
     benchmark_sim = None
     benchmark_real = None
     # get the simulator's and quantum computer's result from the db
+    i = 1  # for testing simulator can be benchmarked
     for benchmark in Benchmark.query.filter(Benchmark.benchmark_id == benchmark_id):
-        if benchmark.backend == 'ibmq_qasm_simulator':
+        if benchmark.backend == 'ibmq_qasm_simulator' and i > 0:
             benchmark_sim = benchmark
+            i = i - 1
         else:
             benchmark_real = benchmark
     # check which backend has finished execution and adapt response to that
