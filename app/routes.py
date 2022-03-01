@@ -300,6 +300,35 @@ def get_analysis():
     return jsonify(benchmarking.analyse())
 
 
+@app.route('/qiskit-service/api/v1.0/analysis/<qpu_name>', methods=['GET'])
+def get_analysis_qpu(qpu_name):
+    """Return analysis of all benchmarks from a quantum computer saved in the database"""
+    benchmarks = Benchmark.query.all()
+    list = []
+    for i in range(0, len(benchmarks), 2):
+        if (benchmarks[i].complete and benchmarks[i + 1].complete) and \
+                (benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and \
+                (benchmarks[i].result != "" and benchmarks[i + 1].result != "") and \
+                (benchmarks[i + 1].backend == qpu_name):
+            counts_sim = json.loads(benchmarks[i].counts)
+            counts_real = json.loads(benchmarks[i + 1].counts)
+            shots = benchmarks[i + 1].shots
+            perc_error = analysis.calc_percentage_error(counts_sim, counts_real)
+            correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
+            chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
+            intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
+            list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
+                'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
+                'counts-sim': counts_sim,
+                'counts-real': counts_real,
+                'percentage-error': perc_error,
+                'chi-square': chi_square,
+                'correlation': correlation,
+                'histogram-intersection': intersection}
+            })
+    return jsonify(list)
+
+
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
 def version():
     return jsonify({'version': '1.0'})
