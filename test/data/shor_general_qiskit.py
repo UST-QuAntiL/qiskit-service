@@ -1,4 +1,4 @@
-from qiskit.aqua.algorithms.factorizers import Shor
+from qiskit.algorithms.factorizers import Shor
 
 
 def get_circuit(**kwargs):
