@@ -3,7 +3,6 @@ from qiskit.algorithms.factorizers import Shor
 
 def get_circuit(**kwargs):
     """Get circuit of Shor with input n."""
-    N = kwargs["n"]
-    shor = Shor(N)
-    shor_circuit = shor.construct_circuit(measurement=True)
+    n = kwargs["n"]
+    shor_circuit = Shor.construct_circuit(N=n, measurement=True)
     return shor_circuit
