@@ -1,0 +1,12 @@
+alembic
+click
+Flask
+Flask-Migrate
+Flask-RESTful
+Flask-SQLAlchemy
+qiskit==0.25.4
+redis
+requests
+rq
+SQLAlchemy
+gunicorn
