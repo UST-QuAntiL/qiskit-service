@@ -35,7 +35,7 @@ mpmath==1.2.1
 multitasking==0.0.10
 nest-asyncio==1.5.5
 ntlm-auth==1.5.0
-numpy==1.20.1
+numpy==1.21.0
 packaging==21.3
 pandas==1.2.3
 pbr==5.8.1
