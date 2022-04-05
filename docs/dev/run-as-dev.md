@@ -18,7 +18,19 @@ In PyCharm at _Run > Edit Configurations..._ set
 
 ### Python Packages
 Install packages as listed in [requirements.txt](https://github.com/PlanQK/qiskit-service/blob/master/requirements.txt).
-Python 3.7 required.
+Python 3.9 required.
+
+#### Update requirements
+1. Update locally installed requirements
+```
+pip install -r requirements-unfrozen.txt -U
+```
+2. Check if all works
+   (2.1 delete your local virtual environment, setup a new one and check if all works)
+3. Pin all requirements
+```
+pip freeze > requirements.txt
+```
 
 ### IBMQ Account
 Save your IBMQ token to disk with
