@@ -1,9 +1,9 @@
-from qiskit.aqua.algorithms.factorizers import Shor
+from qiskit.algorithms.factorizers import Shor
 
 
 def get_circuit(**kwargs):
     """Get circuit of Shor with input n."""
-    n = kwargs["n"]
-    shor = Shor(n)
-    shor_circuit = shor.construct_circuit(measurement=True)
+    N = kwargs["n"]
+    shor = Shor()
+    shor_circuit = shor.construct_circuit(N=N, measurement=True)
     return shor_circuit
