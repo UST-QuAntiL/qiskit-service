@@ -161,6 +161,7 @@ def execute_circuit():
     response = jsonify({'Location': content_location})
     response.status_code = 202
     response.headers['Location'] = content_location
+    response.autocorrect_location_header = True
     return response
 
 
@@ -184,6 +185,7 @@ def calculate_calibration_matrix():
     response = jsonify({'Location': content_location})
     response.status_code = 202
     response.headers['Location'] = content_location
+    response.autocorrect_location_header = True
     return response
 
 
