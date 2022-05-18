@@ -161,8 +161,13 @@ def backend_to_dto(backend: IBMQBackend) -> Qpu:
 			max_gate_time=max_gate_time, simulator=False)
 
 
-def get_all_qpus_and_metrics_as_json_str():
-	account_provider = IBMQ.load_account()
+def get_all_qpus_and_metrics_as_json_str(token: str):
+	try:
+		IBMQ.disable_account()
+	except:
+		pass
+
+	account_provider = IBMQ.enable_account(token)
 	backends = account_provider.backends()
 	qpu_dtoes = []
 

@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+from qiskit.providers.ibmq import IBMQAccountError
 
 from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
 from app.benchmark_model import Benchmark
@@ -316,8 +317,21 @@ def get_providers():
 @app.route('/qiskit-service/api/v1.0/providers/<provider_id>/qpus', methods=['GET'])
 def get_qpus_and_metrics_of_provider(provider_id: str):
     """Return qpus and metrics of the specified provider."""
+
+    if request.mimetype != "application/json":
+        return jsonify({"message": "Error: request was not of mimetype application/json"}), 400
+
+    if not request.json:
+        return jsonify({"message": "Error: JSON missing in request"}), 400
+
+    if not request.json["token"]:
+        return jsonify({"message": "Error: token missing in request"}), 401
+
     if provider_id == str(generate_deterministic_uuid("ibmq", "provider")):
-        return get_all_qpus_and_metrics_as_json_str(), 200
+        try:
+            return get_all_qpus_and_metrics_as_json_str(request.json["token"]), 200
+        except IBMQAccountError:
+            return jsonify({"message": "the provided token is wrong"}), 401
     else:
         return jsonify({"message": "Error: unknown provider ID."}), 400
 
