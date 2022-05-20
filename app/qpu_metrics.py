@@ -1,5 +1,7 @@
+import time
 from datetime import datetime
 from hashlib import sha256
+from multiprocessing import Pool
 from typing import List
 from uuid import UUID
 
@@ -173,10 +175,9 @@ def get_all_qpus_and_metrics_as_json_str(token: str):
 
 	account_provider = IBMQ.enable_account(token)
 	backends = account_provider.backends()
-	qpu_dtoes = []
 
-	for backend in backends:
-		qpu_dtoes.append(backend_to_dto(backend))
+	with Pool(16) as p:
+		qpu_dtoes = p.map(backend_to_dto, backends)
 
 	result = QpuListEmbedded(QpuList(qpu_dtoes))
 
