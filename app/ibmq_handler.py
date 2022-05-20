@@ -18,8 +18,9 @@
 # ******************************************************************************
 from time import sleep
 
-from qiskit import IBMQ, QiskitError, QuantumRegister, execute
+from qiskit import QiskitError, QuantumRegister, execute
 from qiskit.ignis.mitigation import CompleteMeasFitter, complete_meas_cal
+from qiskit.providers.ibmq import IBMQ
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
@@ -29,9 +30,7 @@ from qiskit.providers.ibmq.api.exceptions import RequestsApiError
 def get_qpu(token, qpu_name):
     """Load account from token. Get backend."""
     try:
-        IBMQ.save_account(token, overwrite=True)
-        IBMQ.load_account()
-        provider = IBMQ.get_provider(group='open')
+        provider = IBMQ.enable_account(token, group="open")
         backend = provider.get_backend(qpu_name)
         return backend
     except (QiskitBackendNotFoundError, RequestsApiError):
