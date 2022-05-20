@@ -30,6 +30,11 @@ from qiskit.providers.ibmq.api.exceptions import RequestsApiError
 def get_qpu(token, qpu_name):
     """Load account from token. Get backend."""
     try:
+        try:
+            IBMQ.disable_account()
+        except:
+            pass
+
         provider = IBMQ.enable_account(token, group="open")
         backend = provider.get_backend(qpu_name)
         return backend
