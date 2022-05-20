@@ -102,10 +102,14 @@ def backend_to_dto(backend: IBMQBackend) -> Qpu:
 		sum_t2 = 0
 		sum_readout_error = 0
 
-		for q in range(number_of_qubits):
-			sum_t1 += properties.t1(q)
-			sum_t2 += properties.t2(q)
-			sum_readout_error += properties.readout_error(q)
+		for qubit in properties.qubits:
+			for property in qubit:
+				if property.name == "T1":
+					sum_t1 += property.value
+				if property.name == "T2":
+					sum_t2 += property.value
+				if property.name == "readout_error":
+					sum_readout_error += property.value
 
 		avg_t1 = sum_t1 / number_of_qubits
 		avg_t2 = sum_t2 / number_of_qubits
@@ -124,9 +128,9 @@ def backend_to_dto(backend: IBMQBackend) -> Qpu:
 				for param in gate.parameters:
 					if param.name == "gate_error":
 						sum_single_qubit_gate_error += param.value
-						max_gate_time = max(max_gate_time, param.value)
 					if param.name == "gate_length":
 						sum_single_qubit_gate_time += param.value
+						max_gate_time = max(max_gate_time, param.value)
 				single_qubit_gate_cnt += 1
 			if len(gate.qubits) == 2:
 				for param in gate.parameters:
