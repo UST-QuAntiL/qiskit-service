@@ -318,18 +318,14 @@ def get_providers():
 def get_qpus_and_metrics_of_provider(provider_id: str):
     """Return qpus and metrics of the specified provider."""
 
-    if request.mimetype != "application/json":
-        return jsonify({"message": "Error: request was not of mimetype application/json"}), 400
-
-    if not request.json:
-        return jsonify({"message": "Error: JSON missing in request"}), 400
-
-    if not request.json["token"]:
+    if 'token' not in request.headers:
         return jsonify({"message": "Error: token missing in request"}), 401
+
+    token = request.headers.get('token')
 
     if provider_id == str(generate_deterministic_uuid("ibmq", "provider")):
         try:
-            return get_all_qpus_and_metrics_as_json_str(request.json["token"]), 200
+            return get_all_qpus_and_metrics_as_json_str(token), 200
         except IBMQAccountError:
             return jsonify({"message": "the provided token is wrong"}), 401
     else:
