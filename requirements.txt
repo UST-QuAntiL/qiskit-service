@@ -13,7 +13,7 @@ dlx==1.0.4
 docplex==2.15.194
 fastdtw==0.3.4
 fastjsonschema==2.15.3
-Flask==2.1.1
+Flask~=2.1.2
 Flask-Migrate==3.1.0
 Flask-RESTful==0.3.9
 Flask-SQLAlchemy==2.5.1
@@ -30,12 +30,13 @@ jsonschema==4.4.0
 lxml==4.8.0
 Mako==1.2.0
 MarkupSafe==2.1.1
+marshmallow~=3.15.0
 more-itertools==8.12.0
 mpmath==1.2.1
 multitasking==0.0.10
 nest-asyncio==1.5.5
 ntlm-auth==1.5.0
-numpy==1.20.1
+numpy~=1.22.3
 packaging==21.3
 pandas==1.2.3
 pbr==5.8.1
@@ -54,7 +55,7 @@ qiskit-ibmq-provider==0.18.3
 qiskit-ignis==0.7.0
 qiskit-terra==0.20.0
 Quandl==3.6.0
-redis==4.2.2
+redis~=4.3.1
 requests==2.27.1
 requests-ntlm==1.1.0
 retworkx==0.11.0
@@ -62,7 +63,7 @@ rq==1.10.1
 scikit-learn==0.24.1
 scipy==1.6.1
 six==1.16.0
-SQLAlchemy==1.4.34
+SQLAlchemy~=1.4.36
 stevedore==3.5.0
 symengine==0.9.2
 sympy==1.7.1
