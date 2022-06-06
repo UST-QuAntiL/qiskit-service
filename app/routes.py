@@ -187,6 +187,12 @@ def calculate_calibration_matrix():
     return response
 
 
+@app.route('/qiskit-service/api/v1.0/calc-wd/<qpu_name>', methods=['GET'])
+def calc_wd(qpu_name):
+    wd = benchmarking.calc_wd(qpu_name)
+    return jsonify(wd)
+
+
 @app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
 def randomize():
     """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
@@ -198,13 +204,14 @@ def randomize():
     min_depth_of_circuit = request.json['min-depth-of-circuit']
     max_depth_of_circuit = request.json['max-depth-of-circuit']
     num_of_circuits = request.json['number-of-circuits']
+    clifford = request.json['clifford']
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 
     locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
                                        min_depth_of_circuit=min_depth_of_circuit,
                                        max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
-                                       token=token)
+                                       clifford=clifford, token=token)
 
     return jsonify(locations)
 
@@ -345,6 +352,7 @@ def get_benchmark_body(benchmark_backend):
             'transpiled-depth': benchmark_backend.transpiled_depth,
             'transpiled-width': benchmark_backend.transpiled_width,
             'transpiled-number-of-multi-qubit-gates': benchmark_backend.transpiled_number_of_multi_qubit_gates,
+            'clifford': benchmark_backend.clifford,
             'benchmark-id': benchmark_backend.benchmark_id,
             'complete': benchmark_backend.complete,
             'shots': benchmark_backend.shots
