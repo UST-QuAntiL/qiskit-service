@@ -159,8 +159,9 @@ Send QPU information, optional shots, and your IBM Quantum Experience token to t
 Returns a content location for the result. Access it via `GET`.
 
 ## Benchmark Request
-Send QPU information, the width and depth of the circuit, the number of circuits you want to create, the number of shots
-and your IBM Quantum Experience token to the API to get the result on the IBM Quantum Simulator, and the stated QPU.
+Send QPU information, the width and depth of the circuit, the number of circuits you want to create, the number of shots,
+optional boolean for clifford gates and your IBM Quantum Experience token to the API to get the result on the
+IBM Quantum Simulator, and the stated QPU.
 The response also contains a link to the summary of the benchmark.
 
 `POST /qiskit-service/api/v1.0/randomize`
@@ -173,6 +174,7 @@ The response also contains a link to the summary of the benchmark.
     "max-depth-of-circuit": "MAX-DEPTH-OF-THE-RANDOMIZED-CIRCUIT",
     "number-of-circuits": "NUMBER-OF-CIRCUITS",
     "shots": "NUMBER-OF-SHOTS",
+    "clifford": "BOOLEAN"
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```

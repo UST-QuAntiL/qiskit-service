@@ -204,7 +204,7 @@ def randomize():
     min_depth_of_circuit = request.json['min-depth-of-circuit']
     max_depth_of_circuit = request.json['max-depth-of-circuit']
     num_of_circuits = request.json['number-of-circuits']
-    clifford = request.json['clifford']
+    clifford = request.json.get('clifford', False)
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 

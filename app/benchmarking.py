@@ -62,6 +62,7 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
 
 
 def calc_wd(qpu_name):
+    """calculates the wd-value of a Quantum Computer based on the clifford data in your database"""
     wd = []
     wd_count = np.zeros([7, 5])
     min_sample_size = 15
@@ -76,16 +77,16 @@ def calc_wd(qpu_name):
             depth_range = int(np.floor(depth / 5))
             if depth_range > 6:
                 depth_range = 6
-            width = benchmarks[i].transpiled_width
+            width = benchmarks[i].transpiled_width - 1
             if wd_count[depth_range, width] < min_sample_size:
                 wd_count[depth_range, width] += 1
                 first_value = list(counts.values())[0]
                 intersection = first_value/benchmarks[i].shots
+                # benchmark is successful if histogram intersection is at least min_histogram_intersection
                 if intersection >= min_histogram_intersection:
                     wd_success_count[depth_range, width] += 1
 
     data_count = wd_count.copy()
-    data_success_count = wd_success_count
     width_array = np.array([1, 2, 3, 4, 5])
     depth_array = np.array([5, 10, 15, 20, 25, 30, 35])
 
@@ -93,6 +94,7 @@ def calc_wd(qpu_name):
     wd_count[wd_count == 0] = 1
     prob = wd_success_count/wd_count
 
+    # wd class is successful if at least 2 out of 3 benchmarks are successful
     successful = prob.copy()
     successful[successful >= 2 / 3] = 1
     successful[successful < 2 / 3] = 0
@@ -119,54 +121,11 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
     backend_real = ibmq_handler.get_qpu(token, qpu_name)
     locations = []
 
-    if not clifford:
-        # create the given number of circuits of given width and depth
-        for i in range(min_depth_of_circuit, max_depth_of_circuit + 1):
-            for j in range(num_of_circuits):
-                rowcount = db.session.query(Benchmark).count()
-                benchmark_id = rowcount // 2
-                # create randomized circuits and transpile them for both backends
-                qx = random_circuit(num_qubits=num_of_qubits, depth=i, measure=True)
-                original_number_of_multi_qubit_gates = qx.num_nonlocal_gates()
-                qcircuit_sim = transpile(qx, backend=backend_sim, optimization_level=3)
-                qcircuit_real = transpile(qx, backend=backend_real, optimization_level=3)
-                # ensure that the width of the circuit is correctly saved in the db
-                remove_final_meas = RemoveFinalMeasurements()
-                active_qubits_real = [
-                    qubit for qubit in qcircuit_real.qubits if
-                    qubit not in remove_final_meas.run(circuit_to_dag(qcircuit_real)).idle_wires()
-                ]
-                transpiled_depth_sim = qcircuit_sim.depth()
-                transpiled_width_sim = qcircuit_sim.num_qubits
-                transpiled_number_of_multi_qubit_gates_sim = qcircuit_sim.num_nonlocal_gates()
-                transpiled_depth_real = qcircuit_real.depth()
-                transpiled_width_real = len(active_qubits_real)
-                transpiled_number_of_multi_qubit_gates_real = qcircuit_real.num_nonlocal_gates()
-
-                location_sim = run(circuit=qcircuit_sim, backend=sim_name, token=token, shots=shots,
-                                   benchmark_id=benchmark_id,
-                                   original_depth=i, original_width=num_of_qubits,
-                                   original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
-                                   transpiled_depth=transpiled_depth_sim, transpiled_width=transpiled_width_sim,
-                                   transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_sim,
-                                   clifford=clifford)
-
-                location_real = run(circuit=qcircuit_real, backend=qpu_name, token=token, shots=shots,
-                                    benchmark_id=benchmark_id,
-                                    original_depth=i, original_width=num_of_qubits,
-                                    original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
-                                    transpiled_depth=transpiled_depth_real, transpiled_width=transpiled_width_real,
-                                    transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_real,
-                                    clifford=clifford)
-                location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
-                locations.append({'result-simulator': str(location_sim),
-                                  'result-real-backend': str(location_real),
-                                  'result-benchmark': str(location_benchmark)})
-    elif clifford:
+    if clifford:
         provider = IBMQ.get_provider(group='open')
         backend_real = provider.get_backend(qpu_name)
         backend_sim = provider.get_backend(sim_name)
-        nseeds = 2
+        nseeds = num_of_circuits
 
         # random rb_pattern with random number of multi-qubit-gates
         qubit_seq = [j for j in range(num_of_qubits)]
@@ -231,6 +190,49 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
                                     transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_real,
                                     clifford=clifford)
 
+                location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
+                locations.append({'result-simulator': str(location_sim),
+                                  'result-real-backend': str(location_real),
+                                  'result-benchmark': str(location_benchmark)})
+    else:
+        # create the given number of circuits of given width and depth
+        for i in range(min_depth_of_circuit, max_depth_of_circuit + 1):
+            for j in range(num_of_circuits):
+                rowcount = db.session.query(Benchmark).count()
+                benchmark_id = rowcount // 2
+                # create randomized circuits and transpile them for both backends
+                qx = random_circuit(num_qubits=num_of_qubits, depth=i, measure=True)
+                original_number_of_multi_qubit_gates = qx.num_nonlocal_gates()
+                qcircuit_sim = transpile(qx, backend=backend_sim, optimization_level=3)
+                qcircuit_real = transpile(qx, backend=backend_real, optimization_level=3)
+                # ensure that the width of the circuit is correctly saved in the db
+                remove_final_meas = RemoveFinalMeasurements()
+                active_qubits_real = [
+                    qubit for qubit in qcircuit_real.qubits if
+                    qubit not in remove_final_meas.run(circuit_to_dag(qcircuit_real)).idle_wires()
+                ]
+                transpiled_depth_sim = qcircuit_sim.depth()
+                transpiled_width_sim = qcircuit_sim.num_qubits
+                transpiled_number_of_multi_qubit_gates_sim = qcircuit_sim.num_nonlocal_gates()
+                transpiled_depth_real = qcircuit_real.depth()
+                transpiled_width_real = len(active_qubits_real)
+                transpiled_number_of_multi_qubit_gates_real = qcircuit_real.num_nonlocal_gates()
+
+                location_sim = run(circuit=qcircuit_sim, backend=sim_name, token=token, shots=shots,
+                                   benchmark_id=benchmark_id,
+                                   original_depth=i, original_width=num_of_qubits,
+                                   original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                                   transpiled_depth=transpiled_depth_sim, transpiled_width=transpiled_width_sim,
+                                   transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_sim,
+                                   clifford=clifford)
+
+                location_real = run(circuit=qcircuit_real, backend=qpu_name, token=token, shots=shots,
+                                    benchmark_id=benchmark_id,
+                                    original_depth=i, original_width=num_of_qubits,
+                                    original_number_of_multi_qubit_gates=original_number_of_multi_qubit_gates,
+                                    transpiled_depth=transpiled_depth_real, transpiled_width=transpiled_width_real,
+                                    transpiled_number_of_multi_qubit_gates=transpiled_number_of_multi_qubit_gates_real,
+                                    clifford=clifford)
                 location_benchmark = '/qiskit-service/api/v1.0/benchmarks/' + str(benchmark_id)
                 locations.append({'result-simulator': str(location_sim),
                                   'result-real-backend': str(location_real),
