@@ -126,22 +126,24 @@ def backend_to_dto(backend: IBMQBackend) -> Qpu:
 		max_gate_time = 0
 
 		for gate in properties.gates:
-			if len(gate.qubits) == 1:
-				for param in gate.parameters:
-					if param.name == "gate_error":
-						sum_single_qubit_gate_error += param.value
-					if param.name == "gate_length":
-						sum_single_qubit_gate_time += param.value
-						max_gate_time = max(max_gate_time, param.value)
-				single_qubit_gate_cnt += 1
-			if len(gate.qubits) == 2:
-				for param in gate.parameters:
-					if param.name == "gate_error":
-						sum_multi_qubit_gate_error += param.value
-						max_gate_time = max(max_gate_time, param.value)
-					if param.name == "gate_length":
-						sum_multi_qubit_gate_time += param.value
-				multi_qubit_gate_cnt += 1
+			# ignoring reset gates as they have high gate lengths and are not common at the moment
+			if gate != "reset":
+				if len(gate.qubits) == 1:
+					for param in gate.parameters:
+						if param.name == "gate_error":
+							sum_single_qubit_gate_error += param.value
+						if param.name == "gate_length":
+							sum_single_qubit_gate_time += param.value
+							max_gate_time = max(max_gate_time, param.value)
+					single_qubit_gate_cnt += 1
+				if len(gate.qubits) == 2:
+					for param in gate.parameters:
+						if param.name == "gate_error":
+							sum_multi_qubit_gate_error += param.value
+							max_gate_time = max(max_gate_time, param.value)
+						if param.name == "gate_length":
+							sum_multi_qubit_gate_time += param.value
+					multi_qubit_gate_cnt += 1
 
 		avg_single_qubit_gate_error = sum_single_qubit_gate_error / single_qubit_gate_cnt
 		avg_single_qubit_gate_time = sum_single_qubit_gate_time / single_qubit_gate_cnt
