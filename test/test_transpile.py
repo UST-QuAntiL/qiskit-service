@@ -192,7 +192,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_santiago_file_qasm(self):
+    def test_transpile_shor_nairobi_file_qasm(self):
 
         # prepare the request
         file_path = (os.path.dirname(__file__))+'/data/shor-fix-15.qasm'
@@ -201,7 +201,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'OpenQASM',
-            'qpu-name': "ibmq_santiago",
+            'qpu-name': "ibm_nairobi",
             'input-params': {},
             'token': os.environ["QISKIT_TOKEN"]
         }
@@ -266,12 +266,12 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_santiago(self):
+    def test_transpile_shor_nairobi(self):
 
         # prepare the request
         request = {
             'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
-            'qpu-name': "ibmq_santiago",
+            'qpu-name': "ibm_nairobi",
             'input-params': {
                 'N': {
                     'rawValue': "9",
