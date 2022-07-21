@@ -12,7 +12,7 @@ services:
     networks:
       - default
   qiskit-service:
-    image: planqk/qiskit-service:local
+    image: planqk/qiskit-service:latest
     command: sh /app/startup.sh
     ports:
       - "5013:5013"
@@ -25,7 +25,7 @@ services:
       - default
 
   rq-worker:
-    image: planqk/qiskit-service:local
+    image: planqk/qiskit-service:latest
     command: rq worker --url redis://redis:5040 qiskit-service_execute
     environment:
       - REDIS_URL=redis://redis:5040
