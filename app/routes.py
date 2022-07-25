@@ -127,20 +127,20 @@ def transpile_circuit():
                     f"number of single qubit gates={number_of_single_qubit_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}, "
                     f"number of measurement operations={number_of_measurement_operations}")
-    return jsonify([{'original-depth': non_transpiled_depth,
-                     'original-width': non_transpiled_width,
-                     'original-total-number-of-operations': non_transpiled_total_number_of_operations,
-                     'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
-                     'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
-                     'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates},
-                    {'depth': depth,
-                     'multi-qubit-gate-depth': multi_qubit_gate_depth,
-                     'width': width,
-                     'total-number-of-operations': total_number_of_operations,
-                     'number-of-single-qubit-gates': number_of_single_qubit_gates,
-                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
-                     'number-of-measurement-operations': number_of_measurement_operations,
-                     'transpiled-qasm': transpiled_circuit.qasm()}]), 200
+    return jsonify({'original-depth': non_transpiled_depth,
+                    'original-width': non_transpiled_width,
+                    'original-total-number-of-operations': non_transpiled_total_number_of_operations,
+                    'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
+                    'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
+                    'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
+                    'depth': depth,
+                    'multi-qubit-gate-depth': multi_qubit_gate_depth,
+                    'width': width,
+                    'total-number-of-operations': total_number_of_operations,
+                    'number-of-single-qubit-gates': number_of_single_qubit_gates,
+                    'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
+                    'number-of-measurement-operations': number_of_measurement_operations,
+                    'transpiled-qasm': transpiled_circuit.qasm()}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/analyze-original-circuit', methods=['POST'])
@@ -153,7 +153,7 @@ def analyze_original_circuit():
     impl_url = request.json.get('impl-url', "")
     input_params = request.json.get('input-params', "")
     bearer_token = request.json.get("bearer-token", "")
-    #input_params = parameters.ParameterDictionary(input_params)
+    input_params = parameters.ParameterDictionary(input_params)
 
     if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
