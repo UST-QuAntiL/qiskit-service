@@ -22,7 +22,7 @@ Now the qiskit-service is available on http://localhost:5013/.
 
 ## Transpilation Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself.
-*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
+*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes. Furthermore, ``url``,``hub``,``group``,``project`` can be defined in ``input-params``.
 `POST /qiskit-service/api/v1.0/transpile`  
 
 #### Transpilation via URL
@@ -74,9 +74,34 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 }
 ```
 
+#### Transpilation as OpenQasm-String
+```
+{  
+    "qasm-string": "OpenQASM String",
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+
+
 ## Execution Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result.
-*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.
+*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes. Furthermore, ``url``,``hub``,``group``,``project`` can be defined in ``input-params``.
 
 `POST /qiskit-service/api/v1.0/execute`  
 #### Execution via URL
