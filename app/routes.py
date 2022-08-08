@@ -181,9 +181,14 @@ def analyze_original_circuit():
         abort(400)
 
     try:
-        print(circuit)
-        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
+        non_transpiled_depth_old = 0
+
         non_transpiled_depth = circuit.depth()
+        while non_transpiled_depth_old < non_transpiled_depth:
+            non_transpiled_depth_old = non_transpiled_depth
+            circuit = circuit.decompose()
+            non_transpiled_depth = circuit.depth()
+        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
         non_transpiled_total_number_of_operations = circuit.size()
         non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
         non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
@@ -191,6 +196,7 @@ def analyze_original_circuit():
                                        non_transpiled_number_of_multi_qubit_gates - \
                                        non_transpiled_number_of_measurement_operations
         non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit)
+        print(circuit)
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
             app.logger.warn(f"{short_impl_name} not found.")
