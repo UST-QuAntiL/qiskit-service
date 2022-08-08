@@ -189,6 +189,7 @@ def calculate_calibration_matrix():
 
 @app.route('/qiskit-service/api/v1.0/calc-wd/<qpu_name>', methods=['GET'])
 def calc_wd(qpu_name):
+    """calculates wd-value of a given Quantum Computer based on the clifford data in your database and returns it"""
     wd = benchmarking.calc_wd(qpu_name)
     return jsonify(wd)
 
@@ -309,7 +310,7 @@ def get_analysis():
 
 @app.route('/qiskit-service/api/v1.0/analysis/<qpu_name>', methods=['GET'])
 def get_analysis_qpu(qpu_name):
-    """Return analysis of all benchmarks from a quantum computer saved in the database"""
+    """Return analysis of all benchmarks from a specific quantum computer saved in the database"""
     benchmarks = Benchmark.query.all()
     list = []
     for i in range(0, len(benchmarks), 2):

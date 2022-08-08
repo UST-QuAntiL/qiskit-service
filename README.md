@@ -203,6 +203,16 @@ The reponse also includes the counts of simulator and quantum computer as well a
 
 `GET /qiskit-service/api/v1.0/analysis`
 
+Access the analysis of all benchmarks on a specific Quantum Computer in the database that successfully returned a result with
+
+`GET /qiskit-service/api/v1.0/analysis/<qpu_name> `
+
+## wd Request
+Request the wd-value of a specific Quantum Computer based on the clifford gate circuit data in your database
+
+`GET /qiskit-service/api/v1.0/calc-wd/<qpu_name>`
+
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).

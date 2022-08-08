@@ -63,20 +63,29 @@ def run(circuit, backend, token, shots, benchmark_id, original_depth, original_w
 
 def calc_wd(qpu_name):
     """calculates the wd-value of a Quantum Computer based on the clifford data in your database"""
+    # circuits with similar depth and same width are grouped together. Depth is grouped in steps of 5
     wd = []
-    wd_count = np.zeros([7, 5])
+    wd_count = np.zeros([7, 5])  # counts benchmarks for each wd-class
+    wd_success_count = np.zeros([7, 5])  # counts successes of benchmarks for each wd-class
+
+    # adaptable threshold values (values are work in progress)
+    min_histogram_intersection = 0.75  # min histogram intersection value for a benchmark being considered successful
+    class_success_threshold = 2/3   # percentage of benchmarks that have to be successful for the wd-class to be
+                                    # successful
+    max_expected_depth = 30
+
     min_sample_size = 15
-    wd_success_count = np.zeros([7, 5])
-    min_histogram_intersection = 0.75
+    max_class_depth = int(np.floor(max_expected_depth / 5))
     benchmarks = Benchmark.query.all()
     for i in range(0, len(benchmarks)):
         if benchmarks[i].complete and benchmarks[i].result != "" and benchmarks[i].backend == qpu_name\
                 and benchmarks[i].clifford:
             counts = json.loads(benchmarks[i].counts)
             depth = benchmarks[i].transpiled_depth
+            # calculating the depth range of the benchmark
             depth_range = int(np.floor(depth / 5))
-            if depth_range > 6:
-                depth_range = 6
+            if depth_range > max_class_depth:
+                depth_range = max_class_depth
             width = benchmarks[i].transpiled_width - 1
             if wd_count[depth_range, width] < min_sample_size:
                 wd_count[depth_range, width] += 1
@@ -96,8 +105,8 @@ def calc_wd(qpu_name):
 
     # wd class is successful if at least 2 out of 3 benchmarks are successful
     successful = prob.copy()
-    successful[successful >= 2 / 3] = 1
-    successful[successful < 2 / 3] = 0
+    successful[successful >= class_success_threshold] = 1
+    successful[successful < class_success_threshold] = 0
 
     wd2 = wd_matrix.copy()
     wd2[successful == 0] = 0
@@ -122,6 +131,7 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
     locations = []
 
     if clifford:
+        # create the given number of completely random clifford gate circuits of given width
         provider = IBMQ.get_provider(group='open')
         backend_real = provider.get_backend(qpu_name)
         backend_sim = provider.get_backend(sim_name)
@@ -168,12 +178,10 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
                 transpiled_depth_real = transpiled_circuit_real.depth()
                 transpiled_number_of_multi_qubit_gates_real = transpiled_circuit_real.num_nonlocal_gates()
                 transpiled_width_real = len(active_qubits_transpiled_circuit_real)
-                # transpiled_number_of_multi_qubit_gates_real = qcircuit_real.num_nonlocal_gates()
 
                 transpiled_depth_sim = transpiled_circuit_sim.depth()
                 transpiled_number_of_multi_qubit_gates_sim = transpiled_circuit_sim.num_nonlocal_gates()
                 transpiled_width_sim = len(active_qubits_transpiled_circuit_sim)
-                # transpiled_number_of_multi_qubit_gates_sim = qcircuit_sim.num_nonlocal_gates()
 
                 location_sim = run(circuit=transpiled_circuit_sim, backend=sim_name, token=token, shots=shots,
                                    benchmark_id=benchmark_id, original_depth=elem.depth(), original_width=num_of_qubits,
@@ -195,7 +203,7 @@ def randomize(qpu_name, num_of_qubits, shots, min_depth_of_circuit, max_depth_of
                                   'result-real-backend': str(location_real),
                                   'result-benchmark': str(location_benchmark)})
     else:
-        # create the given number of circuits of given width and depth
+        # create the given number of completely random circuits of given width and depth
         for i in range(min_depth_of_circuit, max_depth_of_circuit + 1):
             for j in range(num_of_circuits):
                 rowcount = db.session.query(Benchmark).count()
