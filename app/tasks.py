@@ -44,19 +44,19 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
 
     app.logger.info('Preparing implementation...')
     if transpiled_qasm:
-        transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
+        transpiled_circuit = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
     else:
         if impl_url:
             if impl_language.lower() == 'openqasm':
-                circuit = implementation_handler.prepare_code_from_qasm_url(impl_url, bearer_token)
+                circuit = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
             else:
-                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
+                circuit = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in impl_url]
         elif impl_data:
-            impl_data = base64.b64decode(impl_data.encode()).decode()
+            impl_data = [base64.b64decode(data.encode()).decode() for data in impl_data]
             if impl_language.lower() == 'openqasm':
-                circuit = implementation_handler.prepare_code_from_qasm(impl_data)
+                circuit = [implementation_handler.prepare_code_from_qasm(data) for data in impl_data]
             else:
-                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+                circuit = [implementation_handler.prepare_code_from_data(data, input_params) for data in impl_data]
         if not circuit:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'URL not found'})

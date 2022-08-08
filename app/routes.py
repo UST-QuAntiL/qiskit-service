@@ -132,15 +132,21 @@ def transpile_circuit():
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
-    """Put execution job in queue. Return location of the later result."""
+    """Put execution jobs in queue. Return location of the later results."""
     if not request.json or not 'qpu-name' in request.json:
         abort(400)
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
-    bearer_token = request.json.get("bearer-token", "")
+    if type(impl_url) is str:
+        impl_url = [impl_url]
     impl_data = request.json.get('impl-data')
+    if type(impl_data) is str:
+        impl_data = [impl_data]
     transpiled_qasm = request.json.get('transpiled-qasm')
+    if type(transpiled_qasm) is str:
+        transpiled_qasm = [transpiled_qasm]
+    bearer_token = request.json.get("bearer-token", "")
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
