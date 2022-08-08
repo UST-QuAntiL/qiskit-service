@@ -10,3 +10,4 @@ requests
 rq
 SQLAlchemy
 gunicorn
+marshmallow

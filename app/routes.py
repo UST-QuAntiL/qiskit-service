@@ -16,9 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+from qiskit.providers.ibmq import IBMQAccountError
 
 from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
 from app.benchmark_model import Benchmark
+from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
 from app.result_model import Result
 from flask import jsonify, abort, request
 from qiskit import transpile
@@ -161,6 +163,7 @@ def execute_circuit():
     response = jsonify({'Location': content_location})
     response.status_code = 202
     response.headers['Location'] = content_location
+    response.autocorrect_location_header = True
     return response
 
 
@@ -184,6 +187,7 @@ def calculate_calibration_matrix():
     response = jsonify({'Location': content_location})
     response.status_code = 202
     response.headers['Location'] = content_location
+    response.autocorrect_location_header = True
     return response
 
 
@@ -300,6 +304,40 @@ def get_benchmark(benchmark_id):
                                                       'complete': benchmark_real.complete}]}), 200
     else:
         abort(404)
+
+
+@app.route('/qiskit-service/api/v1.0/providers', methods=['GET'])
+def get_providers():
+    """Return available providers."""
+    return jsonify({
+        "_embedded": {
+            "providerDtoes": [
+                {
+                    "id": str(generate_deterministic_uuid("ibmq", "provider")),
+                    "name": "ibmq",
+                    "offeringURL": "https://quantum-computing.ibm.com/",
+                }
+            ]
+        }
+    }), 200
+
+
+@app.route('/qiskit-service/api/v1.0/providers/<provider_id>/qpus', methods=['GET'])
+def get_qpus_and_metrics_of_provider(provider_id: str):
+    """Return qpus and metrics of the specified provider."""
+
+    if 'token' not in request.headers:
+        return jsonify({"message": "Error: token missing in request"}), 401
+
+    token = request.headers.get('token')
+
+    if provider_id == str(generate_deterministic_uuid("ibmq", "provider")):
+        try:
+            return get_all_qpus_and_metrics_as_json_str(token), 200
+        except IBMQAccountError:
+            return jsonify({"message": "the provided token is wrong"}), 401
+    else:
+        return jsonify({"message": "Error: unknown provider ID."}), 400
 
 
 @app.route('/qiskit-service/api/v1.0/analysis', methods=['GET'])

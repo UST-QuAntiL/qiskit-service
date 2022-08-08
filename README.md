@@ -217,6 +217,15 @@ Request the wd-value of a specific Quantum Computer based on the clifford gate c
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).
 
+## Get up-to-date data of QPUs
+Get provider information:  
+`GET /qiskit-service/api/v1.0/providers` 
+
+Get up-to-date information about QPUs of IBMQ:  
+`GET /qiskit-service/api/v1.0/providers/f8f0c200-875d-0ff8-0352-1be4666c5829/qpus`   
+For the request, add your Qiskit token as header:  
+`token: <YOUR-IBMQ-TOKEN>` 
+
 ## Haftungsausschluss
 
 Dies ist ein Forschungsprototyp.
