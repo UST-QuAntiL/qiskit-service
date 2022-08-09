@@ -51,11 +51,15 @@ def transpile_circuit():
         abort(400)
 
 
-    # Check parameters required for using premium accounts, de.imbq and reservations
-    ibmq_url = input_params['url'] if 'url' in input_params else 'https://auth.quantum-computing.ibm.com/api'
-    hub  = input_params['hub'] if 'hub' in input_params else 'ibm-q'
-    group  = input_params['group']  if 'group' in input_params else 'open'
-    project  = input_params['project'] if 'project' in input_params else 'main'
+    credentials = {}
+    if 'url' in input_params:
+        credentials['url'] = input_params['url']
+    if 'hub' in input_params:
+        credentials['hub'] = input_params['hub']
+    if 'group' in input_params:
+        credentials['group'] = input_params['group']
+    if 'project' in input_params:
+        credentials['project'] = input_params['project']
 
     if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
@@ -99,7 +103,7 @@ def transpile_circuit():
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
         return jsonify({'error': str(e)}), 200
 
-    backend = ibmq_handler.get_qpu(token, qpu_name, url=ibmq_url, group=group, hub=hub,project=project)
+    backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
     if not backend:
         # ibmq_handler.delete_token()
         app.logger.warn(f"{qpu_name} not found.")
@@ -156,10 +160,16 @@ def execute_circuit():
     input_params = parameters.ParameterDictionary(input_params)
 
     # Check parameters required for using premium accounts, de.imbq and reservations
-    ibmq_url = input_params['url'] if 'url' in input_params else 'https://auth.quantum-computing.ibm.com/api'
-    hub  = input_params['hub'] if 'hub' in input_params else 'ibm-q'
-    group  = input_params['group']  if 'group' in input_params else 'open'
-    project  = input_params['project'] if 'project' in input_params else 'main'
+    credentials = {}
+    if 'url' in input_params:
+        credentials['url'] = input_params['url']
+    if 'hub' in input_params:
+        credentials['hub'] = input_params['hub']
+    if 'group' in input_params:
+        credentials['group'] = input_params['group']
+    if 'project' in input_params:
+        credentials['project'] = input_params['project']
+
 
     shots = request.json.get('shots', 1024)
     if 'token' in input_params:
@@ -171,7 +181,8 @@ def execute_circuit():
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, input_params=input_params, shots=shots, bearer_token=bearer_token, url=ibmq_url, group=group, hub=hub,project=project)
+                                    token=token, input_params=input_params, shots=shots, bearer_token=bearer_token,
+                                    **credentials)
     result = Result(id=job.get_id(), backend=qpu_name, shots=shots)
     db.session.add(result)
     db.session.commit()

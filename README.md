@@ -45,6 +45,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
         }
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        }
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        }
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        }
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
+        }
     },
     "token": "YOUR-IBMQ-TOKEN"
 }
@@ -67,6 +83,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         ...
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
             "type": "Unknown"
         }
     },
@@ -91,6 +123,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         ...
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
             "type": "Unknown"
         }
     },
@@ -123,6 +171,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
         }
     },
     "token": "YOUR-IBMQ-TOKEN"
@@ -147,6 +211,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
         }
     },
     "token": "YOUR-IBMQ-TOKEN"
@@ -160,6 +240,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
     "input-params": {
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
             "type": "Unknown"
         }
     },

@@ -27,7 +27,7 @@ from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from qiskit.providers.ibmq.api.exceptions import RequestsApiError
 
 
-def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group="open", project='main'):
+def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group='open', project='main'):
     """Load account from token. Get backend."""
     try:
         try:
