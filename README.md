@@ -107,7 +107,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 }
 ```
 
-#### Transpilation as OpenQasm-String
+#### Transpilation via OpenQASM-String
 ```
 {  
     "qasm-string": "OpenQASM String",
@@ -234,6 +234,47 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
+
+#### Execution via OpenQASM-String
+```
+{  
+    "qasm-string": "OpenQASM String",
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+
 #### Execution via transpiled OpenQASM String
 ```
 {  
