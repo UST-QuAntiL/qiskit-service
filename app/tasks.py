@@ -30,12 +30,12 @@ import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token, url, hub, group, project):
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
 
-    backend = ibmq_handler.get_qpu(token, qpu_name, url=url, hub=hub, group=group, project=project)
+    backend = ibmq_handler.get_qpu(token, qpu_name, **kwargs)
     if not backend:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
