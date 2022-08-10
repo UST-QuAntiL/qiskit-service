@@ -24,6 +24,7 @@ Now the qiskit-service is available on http://localhost:5013/.
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes. Furthermore, ``url``,``hub``,``group``,``project`` can be defined in ``input-params``.
 `POST /qiskit-service/api/v1.0/transpile`  
+*Note*: ``url``, ``hub``, ``group``, ``project`` are optional such that otherwise the standard values are used.
 
 #### Transpilation via URL
 ```
@@ -149,7 +150,8 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
 
 ## Execution Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result.
-*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes. Furthermore, ``url``,``hub``,``group``,``project`` can be defined in ``input-params``.
+*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.
+*Note*: ``url``, ``hub``, ``group``, ``project`` are optional such that otherwise the standard values are used.
 
 `POST /qiskit-service/api/v1.0/execute`  
 #### Execution via URL
