@@ -91,7 +91,7 @@ def transpile_circuit():
         abort(400)
 
     try:
-        app.logger.info("circuit",circuit)
+        print("circuit", circuit)
         non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
         non_transpiled_depth = circuit.depth()
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
