@@ -30,7 +30,7 @@ import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token, **kwargs):
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -46,7 +46,9 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
     if transpiled_qasm:
         transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
     else:
-        if impl_url:
+        if qasm_string:
+            circuit = implementation_handler.prepare_code_from_qasm(qasm_string)
+        elif impl_url:
             if impl_language.lower() == 'openqasm':
                 circuit = implementation_handler.prepare_code_from_qasm_url(impl_url, bearer_token)
             else:

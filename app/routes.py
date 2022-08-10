@@ -155,6 +155,7 @@ def execute_circuit():
     impl_url = request.json.get('impl-url')
     bearer_token = request.json.get("bearer-token", "")
     impl_data = request.json.get('impl-data')
+    qasm_string = request.json.get('qasm-string', "")
     transpiled_qasm = request.json.get('transpiled-qasm')
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
@@ -182,7 +183,7 @@ def execute_circuit():
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
                                     token=token, input_params=input_params, shots=shots, bearer_token=bearer_token,
-                                    **credentials)
+                                    qasm_string=qasm_string, **credentials)
     result = Result(id=job.get_id(), backend=qpu_name, shots=shots)
     db.session.add(result)
     db.session.commit()
