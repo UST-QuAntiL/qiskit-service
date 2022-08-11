@@ -22,8 +22,9 @@ Now the qiskit-service is available on http://localhost:5013/.
 
 ## Transpilation Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself.
-*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
+*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.
 `POST /qiskit-service/api/v1.0/transpile`  
+*Note*: ``url``, ``hub``, ``group``, ``project`` are optional such that otherwise the standard values are used.
 
 #### Transpilation via URL
 ```
@@ -43,6 +44,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         ...
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        }
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        }
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        }
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        }
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
             "type": "Unknown"
         }
     },
@@ -68,15 +85,73 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
         }
     },
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
 
+#### Transpilation via OpenQASM-String
+```
+{  
+    "qasm-string": "OpenQASM String",
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+
+
 ## Execution Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.
+*Note*: ``url``, ``hub``, ``group``, ``project`` are optional such that otherwise the standard values are used.
 
 `POST /qiskit-service/api/v1.0/execute`  
 #### Execution via URL
@@ -97,6 +172,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         ...
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
             "type": "Unknown"
         }
     },
@@ -122,11 +213,68 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
         }
     },
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
+
+#### Execution via OpenQASM-String
+```
+{  
+    "qasm-string": "OpenQASM String",
+    "qpu-name": "NAME-OF-QPU",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
+
 #### Execution via transpiled OpenQASM String
 ```
 {  
@@ -135,6 +283,22 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
     "input-params": {
         "token": {
             "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
             "type": "Unknown"
         }
     },
