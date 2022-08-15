@@ -166,7 +166,7 @@ def execute_circuit():
         transpiled_qasm = [transpiled_qasm]
     bearer_token = request.json.get("bearer-token", "")
     input_params = request.json.get('input-params', "")
-    optimization_level = request.json.get('circuit transpile optimization level', 3)
+    optimization_level = request.json.get('transpilation-optimization-level', 3)
     input_params = parameters.ParameterDictionary(input_params)
 
     # Check parameters required for using premium accounts, de.imbq and reservations
