@@ -338,8 +338,7 @@ class TranspileTestCase(unittest.TestCase):
             'impl-language': 'Qiskit',
             'qpu-name': "ibmq_qasm_simulator",
             'input-params': {},
-            'token': os.environ["QISKIT_TOKEN"],
-            "bearer-token": os.environ["BEARER_TOKEN"]
+            'token': os.environ["QISKIT_TOKEN"]
         }
 
         # send the request
