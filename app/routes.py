@@ -148,6 +148,7 @@ def execute_circuit():
         transpiled_qasm = [transpiled_qasm]
     bearer_token = request.json.get("bearer-token", "")
     input_params = request.json.get('input-params', "")
+    optimization_level = request.json.get('circuit transpile optimization level', 3)
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
     if 'token' in input_params:
@@ -159,7 +160,8 @@ def execute_circuit():
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, input_params=input_params, shots=shots, bearer_token=bearer_token)
+                                    token=token, input_params=input_params, optimization_level=optimization_level,
+                                    shots=shots, bearer_token=bearer_token)
     result = Result(id=job.get_id(), backend=qpu_name, shots=shots)
     db.session.add(result)
     db.session.commit()

@@ -23,6 +23,7 @@ from app.config import basedir
 from app import app, db
 import qiskit
 import base64
+from qiskit.circuit.random import random_circuit
 
 
 class TranspileTestCase(unittest.TestCase):
@@ -323,6 +324,29 @@ class TranspileTestCase(unittest.TestCase):
 
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
+
+
+    def test_batch_execution(self):
+        # Build a thousand circuits.
+        circs = []
+        for _ in range(1000):
+            circs.append(random_circuit(num_qubits=5, depth=4, measure=True).qasm())
+
+        request = {
+            'impl-qasm': circs,
+            'impl-language': 'Qiskit',
+            'qpu-name': "ibmq_qasm_simulator",
+            'input-params': {},
+            'token': os.environ["QISKIT_TOKEN"],
+            "bearer-token": os.environ["BEARER_TOKEN"]
+        }
+
+        # send the request
+        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        json_data = r.get_json()
+        self.assertIsNotNone("result", json_data)
         print(r.headers.get("Location"))
 
 

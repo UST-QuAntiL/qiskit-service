@@ -22,6 +22,7 @@ from app import implementation_handler, ibmq_handler, db, app
 from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
+from qiskit.providers.ibmq.managed import IBMQJobManager
 
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
@@ -30,7 +31,8 @@ import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token: str):
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level,
+            shots, bearer_token: str):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -64,7 +66,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             db.session.commit()
         app.logger.info('Start transpiling...')
         try:
-            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
+            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=optimization_level)
         except TranspilerError:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'too many qubits required'})
@@ -72,10 +74,15 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             db.session.commit()
 
     app.logger.info('Start executing...')
-    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
+    job_manager = IBMQJobManager()
+    job_result = job_manager.run(transpiled_circuit, backend=backend, name='foo')
+    # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result['counts'])
+        result_counts = []
+        for i, circ in enumerate(transpiled_circuit):
+            result_counts.append(job_result.results().get_counts(i))
+        result.result = json.dumps(result_counts)
         result.complete = True
         db.session.commit()
     else:
