@@ -31,13 +31,13 @@ import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level,
-            shots, bearer_token: str):
+
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
 
-    backend = ibmq_handler.get_qpu(token, qpu_name)
+    backend = ibmq_handler.get_qpu(token, qpu_name, **kwargs)
     if not backend:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
@@ -48,7 +48,9 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
     if transpiled_qasm:
         transpiled_circuit = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
     else:
-        if impl_url:
+        if qasm_string:
+            circuit = implementation_handler.prepare_code_from_qasm(qasm_string)
+        elif impl_url:
             if impl_language.lower() == 'openqasm':
                 circuit = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
             else:
