@@ -46,29 +46,30 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
 
     app.logger.info('Preparing implementation...')
     if transpiled_qasm:
-        transpiled_circuit = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
+        transpiled_circuits = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
     else:
         if qasm_string:
-            circuit = implementation_handler.prepare_code_from_qasm(qasm_string)
+            circuits = implementation_handler.prepare_code_from_qasm(qasm_string)
         elif impl_url:
             if impl_language.lower() == 'openqasm':
-                circuit = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
+                # list of circuits
+                circuits = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
             else:
-                circuit = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in impl_url]
+                circuits = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in impl_url]
         elif impl_data:
             impl_data = [base64.b64decode(data.encode()).decode() for data in impl_data]
             if impl_language.lower() == 'openqasm':
-                circuit = [implementation_handler.prepare_code_from_qasm(data) for data in impl_data]
+                circuits = [implementation_handler.prepare_code_from_qasm(data) for data in impl_data]
             else:
-                circuit = [implementation_handler.prepare_code_from_data(data, input_params) for data in impl_data]
-        if not circuit:
+                circuits = [implementation_handler.prepare_code_from_data(data, input_params) for data in impl_data]
+        if not circuits:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'URL not found'})
             result.complete = True
             db.session.commit()
         app.logger.info('Start transpiling...')
         try:
-            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=optimization_level)
+            transpiled_circuits = transpile(circuits, backend=backend, optimization_level=optimization_level)
         except TranspilerError:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'too many qubits required'})
@@ -77,13 +78,15 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
 
     app.logger.info('Start executing...')
     job_manager = IBMQJobManager()
-    job_result = job_manager.run(transpiled_circuit, backend=backend, name='foo')
+    job_result = job_manager.run(transpiled_circuits, backend=backend)
     # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
         result_counts = []
-        for i, circ in enumerate(transpiled_circuit):
+        for i, circ in enumerate(transpiled_circuits):
             result_counts.append(job_result.results().get_counts(i))
+        if len(result_counts) == 1:
+            result_counts = result_counts[0]
         result.result = json.dumps(result_counts)
         result.complete = True
         db.session.commit()
