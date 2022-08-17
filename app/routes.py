@@ -27,6 +27,7 @@ from qiskit import transpile
 from qiskit.transpiler.exceptions import TranspilerError
 import json
 import base64
+from qiskit import IBMQ
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
@@ -188,6 +189,10 @@ def execute_circuit():
         token = request.json.get('token')
     else:
         abort(400)
+
+    all_available_qpu_names = ibmq_handler.get_all_qpus(token=token)
+    if qpu_name not in all_available_qpu_names:
+        abort(400, "Invalid qpu name")
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,

@@ -41,6 +41,21 @@ def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', h
         return None
 
 
+def get_all_qpus(token, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group='open', project='main'):
+    """Load account from token. Get all available backends."""
+    try:
+        try:
+            IBMQ.disable_account()
+        except:
+            pass
+        provider = IBMQ.enable_account(token=token, url=url, hub=hub, group=group, project=project)
+        backends = provider.backends()
+        backend = [backend.name() for backend in backends]
+
+        return backend
+    except (QiskitBackendNotFoundError, RequestsApiError):
+        return None
+
 def delete_token():
     """Delete account."""
     IBMQ.delete_account()
