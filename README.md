@@ -305,7 +305,46 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
     "token": "YOUR-IBMQ-TOKEN"
 }
 ```
-
+#### Batch execution
+```
+{
+    "impl-url": ["URL-OF-IMPLEMENTATION-1", "URL-OF-IMPLEMENTATION-2"],
+    "qpu-name": "NAME-OF-QPU",
+    "impl-language": "Qiskit"/"OpenQASM",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        },
+        ...
+        "token": {
+            "rawValue": "YOUR-IBMQ-TOKEN",
+            "type": "Unknown"
+        },
+        "url": {
+            "rawValue": "YOUR-IBMQ-AUTHENTICATION-URL",
+            "type": "Unknown"
+        },
+        "hub": {
+            "rawValue": "YOUR-IBMQ-HUB",
+            "type": "Unknown"
+        },
+        "group": {
+            "rawValue": "YOUR-IBMQ-GROUP",
+            "type": "Unknown"
+        },
+        "project": {
+            "rawValue": "YOUR-IBMQ-PROJECT",
+            "type": "Unknown"
+        }
+    },
+    "token": "YOUR-IBMQ-TOKEN"
+}
+```
 Returns a content location for the result. Access it via `GET`.
 
 ## Calibration Matrix Calculation Request
