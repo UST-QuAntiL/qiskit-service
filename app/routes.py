@@ -230,17 +230,26 @@ def analyze_original_circuit():
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
-    """Put execution job in queue. Return location of the later result."""
+    """Put execution jobs in queue. Return location of the later results."""
     if not request.json or not 'qpu-name' in request.json:
         abort(400)
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
-    bearer_token = request.json.get("bearer-token", "")
-    impl_data = request.json.get('impl-data')
     qasm_string = request.json.get('qasm-string', "")
+    if type(impl_url) is str:
+        impl_url = [impl_url]
+    impl_data = request.json.get('impl-data')
+    if type(impl_data) is str:
+        impl_data = [impl_data]
+    
+
     transpiled_qasm = request.json.get('transpiled-qasm')
+    if type(transpiled_qasm) is str:
+        transpiled_qasm = [transpiled_qasm]
+    bearer_token = request.json.get("bearer-token", "")
     input_params = request.json.get('input-params', "")
+    optimization_level = request.json.get('transpilation-optimization-level', 3)
     input_params = parameters.ParameterDictionary(input_params)
 
     # Check parameters required for using premium accounts, de.imbq and reservations
@@ -265,8 +274,9 @@ def execute_circuit():
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, input_params=input_params, shots=shots, bearer_token=bearer_token,
+                                    token=token, input_params=input_params, optimization_level=optimization_level, shots=shots, bearer_token=bearer_token,
                                     qasm_string=qasm_string, **credentials)
+
     result = Result(id=job.get_id(), backend=qpu_name, shots=shots)
     db.session.add(result)
     db.session.commit()
