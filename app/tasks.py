@@ -22,6 +22,7 @@ from app import implementation_handler, ibmq_handler, db, app
 from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
+from qiskit.providers.ibmq.managed import IBMQJobManager
 
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
@@ -30,7 +31,8 @@ import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, shots, bearer_token, qasm_string, **kwargs):
+
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -44,29 +46,30 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
 
     app.logger.info('Preparing implementation...')
     if transpiled_qasm:
-        transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
+        transpiled_circuits = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
     else:
         if qasm_string:
-            circuit = implementation_handler.prepare_code_from_qasm(qasm_string)
+            circuits = implementation_handler.prepare_code_from_qasm(qasm_string)
         elif impl_url:
             if impl_language.lower() == 'openqasm':
-                circuit = implementation_handler.prepare_code_from_qasm_url(impl_url, bearer_token)
+                # list of circuits
+                circuits = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
             else:
-                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
+                circuits = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in impl_url]
         elif impl_data:
-            impl_data = base64.b64decode(impl_data.encode()).decode()
+            impl_data = [base64.b64decode(data.encode()).decode() for data in impl_data]
             if impl_language.lower() == 'openqasm':
-                circuit = implementation_handler.prepare_code_from_qasm(impl_data)
+                circuits = [implementation_handler.prepare_code_from_qasm(data) for data in impl_data]
             else:
-                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
-        if not circuit:
+                circuits = [implementation_handler.prepare_code_from_data(data, input_params) for data in impl_data]
+        if not circuits:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'URL not found'})
             result.complete = True
             db.session.commit()
         app.logger.info('Start transpiling...')
         try:
-            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
+            transpiled_circuits = transpile(circuits, backend=backend, optimization_level=optimization_level)
         except TranspilerError:
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'too many qubits required'})
@@ -74,10 +77,17 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             db.session.commit()
 
     app.logger.info('Start executing...')
-    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
+    job_manager = IBMQJobManager()
+    job_result = job_manager.run(transpiled_circuits, backend=backend)
+    # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result['counts'])
+        result_counts = []
+        for i, circ in enumerate(transpiled_circuits):
+            result_counts.append(job_result.results().get_counts(i))
+        if len(result_counts) == 1:
+            result_counts = result_counts[0]
+        result.result = json.dumps(result_counts)
         result.complete = True
         db.session.commit()
     else:
