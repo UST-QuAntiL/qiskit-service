@@ -100,7 +100,7 @@ def transpile_circuit():
         non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
                                        non_transpiled_number_of_multi_qubit_gates - \
                                        non_transpiled_number_of_measurement_operations
-        #non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit)
+        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit.copy())
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
             app.logger.warn(f"{short_impl_name} not found.")
@@ -148,6 +148,7 @@ def transpile_circuit():
                     'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
                     'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
                     'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
+                    'original-multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'depth': depth,
                     'multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'width': width,
@@ -181,7 +182,6 @@ def analyze_original_circuit():
                 circuit = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
             except ValueError:
                 abort(400)
-
     elif 'impl-data' in request.json:
         impl_data = base64.b64decode(request.json.get('impl-data').encode()).decode()
         short_impl_name = 'no short name'
@@ -192,12 +192,15 @@ def analyze_original_circuit():
                 circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
             except ValueError:
                 abort(400)
+    elif 'qasm-string' in request.json:
+        short_impl_name = 'no short name'
+        app.logger.info(request.json.get('qasm-string'))
+        circuit = implementation_handler.prepare_code_from_qasm(request.json.get('qasm-string'))
     else:
         abort(400)
 
     try:
         non_transpiled_depth_old = 0
-
         non_transpiled_depth = circuit.depth()
         while non_transpiled_depth_old < non_transpiled_depth:
             non_transpiled_depth_old = non_transpiled_depth
