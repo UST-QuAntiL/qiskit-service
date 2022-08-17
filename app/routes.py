@@ -27,7 +27,6 @@ from qiskit import transpile
 from qiskit.transpiler.exceptions import TranspilerError
 import json
 import base64
-from qiskit import IBMQ
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
