@@ -404,6 +404,26 @@ The reponse also includes the counts of simulator and quantum computer as well a
 
 `GET /qiskit-service/api/v1.0/analysis`
 
+## Analysis of Original Circuit
+Request an analysis of the original circuit. 
+
+`POST /qiskit-service/api/v1.0/analyze-original-circuit`
+```
+{
+    "impl-url": "URL-OF-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"OpenQASM",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        }
+}
+```
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).
