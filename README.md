@@ -415,6 +415,7 @@ Request the wd-value of a specific Quantum Computer based on the clifford gate c
 
 `GET /qiskit-service/api/v1.0/calc-wd/<qpu_name>`
 
+there needs to be at least 10 data points for each number of qubit and depth to get a meaningful result.
 
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
