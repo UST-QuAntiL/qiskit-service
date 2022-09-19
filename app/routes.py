@@ -92,8 +92,13 @@ def transpile_circuit():
 
     try:
         print("circuit", circuit)
-        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
+        non_transpiled_depth_old = 0
         non_transpiled_depth = circuit.depth()
+        while non_transpiled_depth_old < non_transpiled_depth:
+            non_transpiled_depth_old = non_transpiled_depth
+            circuit = circuit.decompose()
+            non_transpiled_depth = circuit.depth()
+        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
         non_transpiled_total_number_of_operations = circuit.size()
         non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
         non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
