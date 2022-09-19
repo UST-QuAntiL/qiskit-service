@@ -402,7 +402,7 @@ Chi-Square-Distance, Correlation, Percentage Error and Histogram Intersection.
   It is normalized between 0 and 1, where 1 would mean that the two histograms are the same.
   Therefore, it is a useful metric to judge the quality of the quantum computer's result.
   
-The reponse also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit.
+The response also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit.
 
 `GET /qiskit-service/api/v1.0/analysis`
 
@@ -415,7 +415,7 @@ Request the wd-value of a specific Quantum Computer based on the clifford gate c
 
 `GET /qiskit-service/api/v1.0/calc-wd/<qpu_name>`
 
-there needs to be at least 10 data points for each number of qubit and depth to get a meaningful result.
+there need to be at least 10 data points for each number of qubits and depth to get a meaningful result.
 
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
