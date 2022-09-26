@@ -65,8 +65,8 @@ def calc_wd(qpu_name):
     """calculates the wd-value of a Quantum Computer based on the clifford data in your database"""
     # circuits with similar depth and same width are grouped together. Depth is grouped in steps of 5
     benchmarks = Benchmark.query.all()
-    max_depth = 0
-    max_width = 0
+    max_depth = 1
+    max_width = 1
     # Searching for max width and depth of all clifford circuits in your database
     for i in range(0, len(benchmarks)):
         if benchmarks[i].complete and benchmarks[i].result != "" and benchmarks[i].backend == qpu_name\
@@ -109,7 +109,7 @@ def calc_wd(qpu_name):
             if intersection >= min_histogram_intersection:
                 wd_success_count[depth_range, width] += 1
 
-    width_array = np.array(range(max_width))
+    width_array = np.array(range(max_width))+1
     depth_array = (np.array(range(max_depth))+1)*5
     wd_matrix = np.outer(depth_array, width_array)
 
