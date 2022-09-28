@@ -231,6 +231,13 @@ def calculate_calibration_matrix():
     return response
 
 
+@app.route('/qiskit-service/api/v1.0/calc-wd/<qpu_name>', methods=['GET'])
+def calc_wd(qpu_name):
+    """calculates wd-value of a given Quantum Computer based on the clifford data in your database and returns it"""
+    wd = benchmarking.calc_wd(qpu_name)
+    return jsonify(wd)
+
+
 @app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
 def randomize():
     """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
@@ -242,13 +249,14 @@ def randomize():
     min_depth_of_circuit = request.json['min-depth-of-circuit']
     max_depth_of_circuit = request.json['max-depth-of-circuit']
     num_of_circuits = request.json['number-of-circuits']
+    clifford = request.json.get('clifford', False)
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 
     locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
                                        min_depth_of_circuit=min_depth_of_circuit,
                                        max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
-                                       token=token)
+                                       clifford=clifford, token=token)
 
     return jsonify(locations)
 
@@ -378,6 +386,35 @@ def get_analysis():
     return jsonify(benchmarking.analyse())
 
 
+@app.route('/qiskit-service/api/v1.0/analysis/<qpu_name>', methods=['GET'])
+def get_analysis_qpu(qpu_name):
+    """Return analysis of all benchmarks from a specific quantum computer saved in the database"""
+    benchmarks = Benchmark.query.all()
+    list = []
+    for i in range(0, len(benchmarks), 2):
+        if (benchmarks[i].complete and benchmarks[i + 1].complete) and \
+                (benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and \
+                (benchmarks[i].result != "" and benchmarks[i + 1].result != "") and \
+                (benchmarks[i + 1].backend == qpu_name):
+            counts_sim = json.loads(benchmarks[i].counts)
+            counts_real = json.loads(benchmarks[i + 1].counts)
+            shots = benchmarks[i + 1].shots
+            perc_error = analysis.calc_percentage_error(counts_sim, counts_real)
+            correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
+            chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
+            intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
+            list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
+                'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
+                'counts-sim': counts_sim,
+                'counts-real': counts_real,
+                'percentage-error': perc_error,
+                'chi-square': chi_square,
+                'correlation': correlation,
+                'histogram-intersection': intersection}
+            })
+    return jsonify(list)
+
+
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
 def version():
     return jsonify({'version': '1.0'})
@@ -394,6 +431,7 @@ def get_benchmark_body(benchmark_backend):
             'transpiled-depth': benchmark_backend.transpiled_depth,
             'transpiled-width': benchmark_backend.transpiled_width,
             'transpiled-number-of-multi-qubit-gates': benchmark_backend.transpiled_number_of_multi_qubit_gates,
+            'clifford': benchmark_backend.clifford,
             'benchmark-id': benchmark_backend.benchmark_id,
             'complete': benchmark_backend.complete,
             'shots': benchmark_backend.shots
