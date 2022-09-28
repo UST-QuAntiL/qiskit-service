@@ -8,7 +8,7 @@ This service takes a Qiskit or OpenQASM implementation as data or via a URL and 
 ## Setup
 * Clone repository:
 ```
-git clone https://github.com/UST-QuAntiL/qiskit-service.git 
+git clone https://github.com/UST-QuAntiL/qiskit-service.git
 git clone git@github.com:UST-QuAntiL/qiskit-service.git
 ```
 
@@ -401,7 +401,7 @@ Chi-Square-Distance, Correlation, Percentage Error and Histogram Intersection.
 - Histogram Intersection: Returns a value that indicates how much of the histograms overlap.
   It is normalized between 0 and 1, where 1 would mean that the two histograms are the same.
   Therefore, it is a useful metric to judge the quality of the quantum computer's result.
-  
+
 The response also includes the counts of simulator and quantum computer as well as the size of the transpiled circuit.
 
 `GET /qiskit-service/api/v1.0/analysis`
@@ -417,18 +417,38 @@ Request the wd-value of a specific Quantum Computer based on the clifford gate c
 
 there need to be at least 10 data points for each number of qubits and depth to get a meaningful result.
 
+## Analysis of Original Circuit
+Request an analysis of the original circuit.
+
+`POST /qiskit-service/api/v1.0/analyze-original-circuit`
+```
+{
+    "impl-url": "URL-OF-IMPLEMENTATION",
+    "impl-language": "Qiskit"/"OpenQASM",
+    "input-params": {
+        "PARAM-NAME-1": {
+            "rawValue": "YOUR-VALUE-1",
+            "type": "Integer"
+        },
+        "PARAM-NAME-2": {
+            "rawValue": "YOUR-VALUE-2",
+            "type": "String"
+        }
+}
+```
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).
 
 ## Get up-to-date data of QPUs
 Get provider information:  
-`GET /qiskit-service/api/v1.0/providers` 
+`GET /qiskit-service/api/v1.0/providers`
 
 Get up-to-date information about QPUs of IBMQ:  
 `GET /qiskit-service/api/v1.0/providers/f8f0c200-875d-0ff8-0352-1be4666c5829/qpus`   
 For the request, add your Qiskit token as header:  
-`token: <YOUR-IBMQ-TOKEN>` 
+`token: <YOUR-IBMQ-TOKEN>`
 
 ## Haftungsausschluss
 
