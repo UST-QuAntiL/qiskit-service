@@ -56,8 +56,10 @@ class BenchmarksTestCase(unittest.TestCase):
         # Create complete dummy result
         b1 = Benchmark(id="2")
         b2 = Benchmark(id="3")
+        b3 = Benchmark(id="4")
         db.session.add(b1)
         db.session.add(b2)
+        db.session.add(b3)
         b1.shots = 1024
         b1.backend = 'ibmq_qasm_simulator'
         b1.original_depth = 1
@@ -82,6 +84,19 @@ class BenchmarksTestCase(unittest.TestCase):
         b2.result = """{"text" : "I am complete !"}"""
         b2.counts = """{"10000": 1024}"""
         b2.complete = True
+        b3.shots = 1024
+        b3.backend = 'ibmq_lima'
+        b3.original_depth = 1
+        b3.original_width = 1
+        b3.original_number_of_multi_qubit_gates = 1
+        b3.transpiled_depth = 1
+        b3.transpiled_width = 1
+        b3.transpiled_number_of_multi_qubit_gates = 1
+        b3.benchmark_id = 2
+        b3.result = """{"text" : "I am complete !"}"""
+        b3.counts = """{"00000": 1024}"""
+        b3.clifford = True
+        b3.complete = True
         db.session.commit()
 
     def tearDown(self):
@@ -96,6 +111,18 @@ class BenchmarksTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertTrue("version" in json_data)
         self.assertEqual(json_data['version'], "1.0")
+
+    def test_calc_wd(self):
+        response_athens = self.client.get('/qiskit-service/api/v1.0/calc-wd/ibmq_athens')
+        self.assertEqual(response_athens.status_code, 200)
+        solution_athens = response_athens.get_json()
+
+        response_lima = self.client.get('/qiskit-service/api/v1.0/calc-wd/ibmq_lima')
+        self.assertEqual(response_lima.status_code, 200)
+        solution_lima = response_lima.get_json()
+
+        self.assertEqual('0', solution_athens[0]['wd'])
+        self.assertGreater(int(solution_lima[0]['wd']), 0)
 
     def test_get_result_incomplete(self):
 

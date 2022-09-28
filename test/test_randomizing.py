@@ -58,6 +58,7 @@ class TranspileTestCase(unittest.TestCase):
             'min-depth-of-circuit': 1,
             'max-depth-of-circuit': 1,
             'number-of-circuits': 1,
+            'clifford': False,
             'shots': 1024,
             'token': os.environ["QISKIT_TOKEN"]
         }
@@ -74,7 +75,6 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("result-simulator", json_data[0])
         self.assertIn("result-real-backend", json_data[0])
 
-
     def test_randomize_no_shots_request(self):
 
         # prepare the request
@@ -84,6 +84,54 @@ class TranspileTestCase(unittest.TestCase):
             'min-depth-of-circuit': 1,
             'max-depth-of-circuit': 1,
             'number-of-circuits': 1,
+            'clifford': False,
+            'token': os.environ["QISKIT_TOKEN"]
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/randomize', json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertEqual(1, len(json_data))
+        self.assertEqual(3, len(json_data[0]))
+        self.assertIn("result-benchmark", json_data[0])
+        self.assertIn("result-simulator", json_data[0])
+        self.assertIn("result-real-backend", json_data[0])
+
+    def test_randomize_no_clifford_request(self):
+
+        # prepare the request
+        request = {
+            'qpu-name': 'ibmq_qasm_simulator',
+            'number-of-qubits': 1,
+            'min-depth-of-circuit': 1,
+            'max-depth-of-circuit': 1,
+            'number-of-circuits': 1,
+            'token': os.environ["QISKIT_TOKEN"]
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/randomize', json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertEqual(1, len(json_data))
+        self.assertEqual(3, len(json_data[0]))
+        self.assertIn("result-benchmark", json_data[0])
+        self.assertIn("result-simulator", json_data[0])
+        self.assertIn("result-real-backend", json_data[0])
+
+    def test_randomize_clifford_full_request(self):
+
+        # prepare the request
+        request = {
+            'qpu-name': 'ibmq_qasm_simulator',
+            'number-of-qubits': 1,
+            'min-depth-of-circuit': 1,
+            'max-depth-of-circuit': 1,
+            'number-of-circuits': 1,
+            'clifford': True,
             'token': os.environ["QISKIT_TOKEN"]
         }
 

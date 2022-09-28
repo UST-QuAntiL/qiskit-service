@@ -33,6 +33,7 @@ class Benchmark(db.Model):
     transpiled_depth = db.Column(db.Integer)
     transpiled_width = db.Column(db.Integer)
     transpiled_number_of_multi_qubit_gates = db.Column(db.Integer)
+    clifford = db.Column(db.Boolean)
     complete = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
