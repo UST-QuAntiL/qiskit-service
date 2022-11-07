@@ -20,13 +20,12 @@ blp = Blueprint(
 @blp.route("/qiskit-service/api/v1.0/calculate-calibration-matrix", methods=["GET"])
 @blp.arguments(
     CalcCalibrationMatrixRequestSchema,
-    example=dict(
-        url="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
-            "/Grover-SAT/grover-fix-sat-qiskit.py",
-        qpu_name="ibmq_qasm_simulator",
-        impl_language="qiskit",
-        token="YOUR-IBMQ-TOKEN"
-    )
+    example={
+        "qpu-name": "ibmq_qasm_simulator",
+        "shots": 1024,
+        "token": "YOUR-IBMQ-TOKEN"
+    }
+
 )
 @blp.response(200, CalcCalibrationMatrixResponseSchema)
 def encoding(json: CalcCalibrationMatrixRequest):

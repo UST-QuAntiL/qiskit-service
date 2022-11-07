@@ -2,20 +2,11 @@ from flask_smorest import Blueprint
 
 from app import routes
 from app.model.circuit_response import (
-    ExecuteURLResponseSchema,
-    ExecuteDataResponseSchema,
-    ExecuteQASMResponseSchema,
-    BatchExecuteResponseSchema
+    ExecuteResponseSchema
 )
 from app.model.algorithm_request import (
-    ExecuteURLRequest,
-    ExecuteURLRequestSchema,
-    ExecuteDataRequest,
-    ExecuteDataRequestSchema,
-    ExecuteQASMRequest,
-    ExecuteQASMRequestSchema,
-    BatchExecuteRequest,
-    BatchExecuteRequestSchema
+    ExecuteRequest,
+    ExecuteRequestSchema
 )
 
 blp = Blueprint(
@@ -27,79 +18,28 @@ blp = Blueprint(
 
 @blp.route("/qiskit-service/api/v1.0/execute", methods=["POST"])
 @blp.arguments(
-    ExecuteURLRequestSchema,
-    example=dict(
-        url="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
+    ExecuteRequestSchema,
+    description='''\
+                Execution via URL:
+                    \"impl-url\": \"URL-OF-IMPLEMENTATION\" 
+                Execution via data:
+                    \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"
+                Execution via OpenQASM-String:
+                    \"qasm-string\": \"OpenQASM String\"
+                Execution via transpiled OpenQASM String:
+                    \"transpiled-qasm\":\"TRANSPILED-QASM-STRING\" 
+                for Batch Execution of multiple circuits use:
+                    \"impl-url\": [\"URL-OF-IMPLEMENTATION-1\", \"URL-OF-IMPLEMENTATION-2\"]''',
+    example={
+        "impl-url": "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
             "/Grover-SAT/grover-fix-sat-qiskit.py",
-        qpu_name="ibmq_qasm_simulator",
-        impl_language="qiskit",
-        token="YOUR-IBMQ-TOKEN"
-    )
+        "qpu-name": "ibmq_qasm_simulator",
+        "impl-language": "qiskit",
+        "token": "YOUR-IBMQ-TOKEN"
+    }
 )
-@blp.response(200, ExecuteURLResponseSchema)
-def encoding(json: ExecuteURLRequest):
+@blp.response(200, ExecuteResponseSchema)
+def encoding(json: ExecuteRequest):
     if json:
         return routes.transpile_circuit()
 
-
-# @blp.route("/qiskit-service/api/v1.0/execute", methods=["POST"])
-# @blp.arguments(
-#     ExecuteDataRequestSchema,
-#     example=dict(
-#         url="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
-#             "/Grover-SAT/grover-fix-sat-qiskit.py",
-#         qpu_name="ibmq_qasm_simulator",
-#         impl_language="qiskit",
-#         token="YOUR-IBMQ-TOKEN"
-#     )
-# )
-# @blp.response(200, ExecuteDataResponseSchema)
-# def encoding(json: ExecuteDataRequest):
-#     if json:
-#         return routes.transpile_circuit()
-#
-#
-# @blp.route("/qiskit-service/api/v1.0/execute", methods=["POST"])
-# @blp.arguments(
-#     ExecuteQASMRequestSchema,
-#     example=dict(
-#         url="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
-#             "/Grover-SAT/grover-fix-sat-qiskit.py",
-#         qpu_name="ibmq_qasm_simulator",
-#         impl_language="qiskit",
-#         token="YOUR-IBMQ-TOKEN"
-#     )
-# )
-# @blp.response(200, ExecuteQASMResponseSchema)
-# def encoding(json: ExecuteQASMRequest):
-#     if json:
-#         return routes.transpile_circuit()
-#
-#
-# @blp.route("/qiskit-service/api/v1.0/execute", methods=["POST"])
-# @blp.arguments(
-#     BatchExecuteRequestSchema,
-#     example=dict(
-#         url=["https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
-#              "/Grover-SAT/grover-fix-sat-qiskit.py",
-#              "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor"
-#              "/shor-general-qiskit.py"],
-#         qpu_name="ibmq_qasm_simulator",
-#         impl_language="qiskit",
-#         input_params={
-#             "N": {
-#                 "rawValue": "9",
-#                 "type": "Integer"
-#             },
-#             "formula": {
-#                 "rawValue": "(~A | B)",
-#                 "type": "String"
-#             }
-#         },
-#         token="YOUR-IBMQ-TOKEN"
-#     )
-# )
-# @blp.response(200, BatchExecuteResponseSchema)
-# def encoding(json: BatchExecuteRequest):
-#     if json:
-#         return routes.transpile_circuit()

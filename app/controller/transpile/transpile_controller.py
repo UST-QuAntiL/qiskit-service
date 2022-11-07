@@ -2,17 +2,11 @@ from flask_smorest import Blueprint
 
 from app import routes
 from app.model.circuit_response import (
-    TranspileURLResponseSchema,
-    TranspileDataResponseSchema,
-    TranspileQASMResponseSchema
+    TranspileResponseSchema,
 )
 from app.model.algorithm_request import (
-    TranspileURLRequestSchema,
-    TranspileURLRequest,
-    TranspileDataRequest,
-    TranspileDataRequestSchema,
-    TranspileQASMRequest,
-    TranspileQASMRequestSchema
+    TranspileRequestSchema,
+    TranspileRequest,
 )
 
 blp = Blueprint(
@@ -24,51 +18,26 @@ blp = Blueprint(
 
 @blp.route("/qiskit-service/api/v1.0/transpile", methods=["POST"])
 @blp.arguments(
-    TranspileURLRequestSchema,
-    example=dict(
-        url="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
+    TranspileRequestSchema,
+    description='''\
+                Transpile via URL:
+                    \"impl-url\": \"URL-OF-IMPLEMENTATION\" 
+                Transpile via data:
+                    \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"
+                Transpile via OpenQASM-String
+                    \"qasm-string\": \"OpenQASM String\"
+                ''',
+    example={
+        "impl-url": "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
             "/Grover-SAT/grover-fix-sat-qiskit.py",
-        qpu_name="ibmq_qasm_simulator",
-        impl_language="qiskit",
-        token="YOUR-IBMQ-TOKEN"
-    ),
+        "qpu-name": "ibmq_qasm_simulator",
+        "impl-language": "qiskit",
+        "token": "YOUR-IBMQ-TOKEN"
+    },
 
 )
-@blp.response(200, TranspileURLResponseSchema)
-def encoding(json: TranspileURLRequest):
+@blp.response(200, TranspileResponseSchema)
+def encoding(json: TranspileRequest):
     if json:
         return routes.transpile_circuit(json)
 
-
-# @blp.route("/qiskit-service/api/v1.0/transpile", methods=["POST"])
-# @blp.arguments(
-#     TranspileDataRequestSchema,
-#     example=dict(
-#         data="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
-#              "/Grover-SAT/grover-fix-sat-qiskit.py",
-#         qpu_name="ibmq_qasm_simulator",
-#         impl_language="qiskit",
-#         token="YOUR-IBMQ-TOKEN"
-#     )
-# )
-# @blp.response(200, TranspileDataResponseSchema)
-# def encoding(json: TranspileDataRequest):
-#     if json:
-#         return routes.transpile_circuit()
-#
-#
-# @blp.route("/qiskit-service/api/v1.0/transpile", methods=["POST"])
-# @blp.arguments(
-#     TranspileQASMRequestSchema,
-#     example=dict(
-#         url="https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations"
-#             "/Grover-SAT/grover-fix-sat-qiskit.py",
-#         qpu_name="ibmq_qasm_simulator",
-#         impl_language="qiskit",
-#         token="YOUR-IBMQ-TOKEN"
-#     )
-# )
-# @blp.response(200, TranspileQASMResponseSchema)
-# def encoding(json: TranspileQASMRequest):
-#     if json:
-#         return routes.transpile_circuit()

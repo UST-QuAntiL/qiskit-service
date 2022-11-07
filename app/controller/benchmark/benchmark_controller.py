@@ -22,15 +22,15 @@ blp = Blueprint(
 @blp.route("/qiskit-service/api/v1.0/randomize", methods=["POST"])
 @blp.arguments(
     BenchmarkRequestSchema,
-    example=dict(
-        qpu_name="ibmq_qasm_simulator",
-        number_of_qubits=3,
-        min_depth=1,
-        max_depth=2,
-        number_of_circuits=3,
-        shots=1024,
-        token="YOUR-IBMQ-TOKEN"
-    )
+    example={
+        "qpu-name": "ibmq_qasm_simulator",
+        "number-of-qubits": 3,
+        "min-depth-of-circuit": 1,
+        "max-depth-of-circuit": 2,
+        "number-of-circuits": 3,
+        "shots": 1024,
+        "token": "YOUR-IBMQ-TOKEN"
+    }
 )
 @blp.response(200, BenchmarkResponseSchema)
 def encoding(json: BenchmarkRequest):

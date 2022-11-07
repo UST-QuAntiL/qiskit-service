@@ -23,6 +23,12 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 from qiskit.providers.ibmq.managed import IBMQJobManager
+from qiskit.utils.measurement_error_mitigation import get_measured_qubits
+from qiskit.providers.aer import AerSimulator
+from qiskit.providers.aer.noise import NoiseModel
+from qiskit.providers.ibmq.api.exceptions import RequestsApiError
+from qiskit.providers import QiskitBackendNotFoundError
+from qiskit import IBMQ, transpile, QuantumCircuit
 
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
@@ -32,7 +38,7 @@ import base64
 
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, shots, bearer_token, qasm_string, **kwargs):
+def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -68,17 +74,42 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             result.complete = True
             db.session.commit()
         app.logger.info('Start transpiling...')
-        try:
-            transpiled_circuits = transpile(circuits, backend=backend, optimization_level=optimization_level)
-        except TranspilerError:
-            result = Result.query.get(job.get_id())
-            result.result = json.dumps({'error': 'too many qubits required'})
-            result.complete = True
-            db.session.commit()
 
-    app.logger.info('Start executing...')
-    job_manager = IBMQJobManager()
-    job_result = job_manager.run(transpiled_circuits, backend=backend)
+        if noise_model:
+            noisy_qpu = get_qpu(kwargs, noise_model)
+            noise_model = NoiseModel.from_backend(noisy_qpu)
+            properties = noisy_qpu.properties()
+            configuration = noisy_qpu.configuration()
+            coupling_map = configuration.coupling_map
+            basis_gates = noise_model.basis_gates
+            transpiled_circuits = transpile(circuits, noisy_qpu)
+            measurement_qubits = get_measurement_qubits_from_transpiled_circuit(transpiled_circuit)
+
+            if only_measurement_errors:
+                ro_noise_model = NoiseModel()
+                for k, v in noise_model._local_readout_errors.items():
+                    ro_noise_model.add_readout_error(v, k)
+                noise_model = ro_noise_model
+
+            backend = AerSimulator()
+
+            app.logger.info('Start executing...')
+            job_manager = IBMQJobManager()
+            job_result = job_manager.run(transpiled_circuits, backend=backend, noise_model=noise_model)
+        else:
+            try:
+                transpiled_circuits = transpile(circuits, backend=backend, optimization_level=optimization_level)
+            except TranspilerError:
+                result = Result.query.get(job.get_id())
+                result.result = json.dumps({'error': 'too many qubits required'})
+                result.complete = True
+                db.session.commit()
+
+            app.logger.info('Start executing...')
+            job_manager = IBMQJobManager()
+            job_result = job_manager.run(transpiled_circuits, backend=backend)
+
+
     # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
@@ -97,6 +128,29 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         db.session.commit()
 
     # ibmq_handler.delete_token()
+
+
+def get_qpu(credentials, qpu):
+    """Load account from token. Get backend."""
+    try:
+        try:
+            IBMQ.disable_account()
+        except IBMQAccountCredentialsNotFound:
+            pass
+        finally:
+            provider = IBMQ.enable_account(**credentials)
+            backend = provider.get_backend(qpu)
+            return backend
+    except (QiskitBackendNotFoundError, RequestsApiError):
+        print('Backend could not be retrieved. Backend name or credentials are invalid. Be sure to use the schema credentials: {"token": "YOUR_TOKEN", "hub": "YOUR_HUB", "group": "YOUR GROUP", "project": "YOUR_PROJECT"). Note that "ibm-q/open/main" are assumed as default values for "hub", "group", "project".')
+        return None
+
+
+def get_measurement_qubits_from_transpiled_circuit(transpiled_circuit):
+    qubit_index, qubit_mappings = get_measured_qubits([transpiled_circuit])
+    measurement_qubits = [int(i) for i in list(qubit_mappings.keys())[0].split("_")]
+
+    return measurement_qubits
 
 
 def convertInSuitableFormat(object):

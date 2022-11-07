@@ -16,3 +16,4 @@ blp = Blueprint(
 @blp.response(200)
 def encoding():
     return routes.analysis
+
