@@ -153,7 +153,7 @@ def transpile_circuit():
                     'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
                     'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
                     'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
-                    'original-multi-qubit-gate-depth': multi_qubit_gate_depth,
+                    'original-multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth,
                     'depth': depth,
                     'multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'width': width,
