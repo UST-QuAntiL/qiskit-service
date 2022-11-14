@@ -92,8 +92,20 @@ def transpile_circuit():
 
     try:
         print("circuit", circuit)
-        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
+        non_transpiled_depth_old = 0
         non_transpiled_depth = circuit.depth()
+        while non_transpiled_depth_old < non_transpiled_depth:
+            non_transpiled_depth_old = non_transpiled_depth
+            circuit = circuit.decompose()
+            non_transpiled_depth = circuit.depth()
+        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
+        non_transpiled_total_number_of_operations = circuit.size()
+        non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
+        non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
+        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
+                                       non_transpiled_number_of_multi_qubit_gates - \
+                                       non_transpiled_number_of_measurement_operations
+        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit.copy())
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
             app.logger.warn(f"{short_impl_name} not found.")
@@ -135,7 +147,14 @@ def transpile_circuit():
                     f"number of single qubit gates={number_of_single_qubit_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}, "
                     f"number of measurement operations={number_of_measurement_operations}")
-    return jsonify({'depth': depth,
+    return jsonify({'original-depth': non_transpiled_depth,
+                    'original-width': non_transpiled_width,
+                    'original-total-number-of-operations': non_transpiled_total_number_of_operations,
+                    'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
+                    'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
+                    'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
+                    'original-multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth,
+                    'depth': depth,
                     'multi-qubit-gate-depth': multi_qubit_gate_depth,
                     'width': width,
                     'total-number-of-operations': total_number_of_operations,
@@ -143,6 +162,78 @@ def transpile_circuit():
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
                     'number-of-measurement-operations': number_of_measurement_operations,
                     'transpiled-qasm': transpiled_circuit.qasm()}), 200
+
+
+@app.route('/qiskit-service/api/v1.0/analyze-original-circuit', methods=['POST'])
+def analyze_original_circuit():
+
+    if not request.json:
+        abort(400)
+
+    impl_language = request.json.get('impl-language', '')
+    impl_url = request.json.get('impl-url', "")
+    input_params = request.json.get('input-params', "")
+    bearer_token = request.json.get("bearer-token", "")
+    input_params = parameters.ParameterDictionary(input_params)
+
+    if impl_url is not None and impl_url != "":
+        impl_url = request.json['impl-url']
+        if impl_language.lower() == 'openqasm':
+            short_impl_name = 'no name'
+            circuit = implementation_handler.prepare_code_from_qasm_url(impl_url, bearer_token)
+        else:
+            short_impl_name = "untitled"
+            try:
+                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
+            except ValueError:
+                abort(400)
+    elif 'impl-data' in request.json:
+        impl_data = base64.b64decode(request.json.get('impl-data').encode()).decode()
+        short_impl_name = 'no short name'
+        if impl_language.lower() == 'openqasm':
+            circuit = implementation_handler.prepare_code_from_qasm(impl_data)
+        else:
+            try:
+                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+            except ValueError:
+                abort(400)
+    elif 'qasm-string' in request.json:
+        short_impl_name = 'no short name'
+        app.logger.info(request.json.get('qasm-string'))
+        circuit = implementation_handler.prepare_code_from_qasm(request.json.get('qasm-string'))
+    else:
+        abort(400)
+
+    try:
+        non_transpiled_depth_old = 0
+        non_transpiled_depth = circuit.depth()
+        while non_transpiled_depth_old < non_transpiled_depth:
+            non_transpiled_depth_old = non_transpiled_depth
+            circuit = circuit.decompose()
+            non_transpiled_depth = circuit.depth()
+        non_transpiled_width = circuit_analysis.get_width_of_circuit(circuit)
+        non_transpiled_total_number_of_operations = circuit.size()
+        non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
+        non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
+        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
+                                       non_transpiled_number_of_multi_qubit_gates - \
+                                       non_transpiled_number_of_measurement_operations
+        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit)
+        print(circuit)
+        print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
+        if not circuit:
+            app.logger.warn(f"{short_impl_name} not found.")
+            abort(404)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 200
+
+    return jsonify({'original-depth': non_transpiled_depth,
+                    'original-width': non_transpiled_width,
+                    'original-total-number-of-operations': non_transpiled_total_number_of_operations,
+                    'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
+                    'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
+                    'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
+                    'original-multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/execute', methods=['POST'])
@@ -233,6 +324,13 @@ def calculate_calibration_matrix():
     return response
 
 
+@app.route('/qiskit-service/api/v1.0/calc-wd/<qpu_name>', methods=['GET'])
+def calc_wd(qpu_name):
+    """calculates wd-value of a given Quantum Computer based on the clifford data in your database and returns it"""
+    wd = benchmarking.calc_wd(qpu_name)
+    return jsonify(wd)
+
+
 @app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
 def randomize():
     """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
@@ -244,13 +342,14 @@ def randomize():
     min_depth_of_circuit = request.json['min-depth-of-circuit']
     max_depth_of_circuit = request.json['max-depth-of-circuit']
     num_of_circuits = request.json['number-of-circuits']
+    clifford = request.json.get('clifford', False)
     shots = request.json.get('shots', 1024)
     token = request.json['token']
 
     locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
                                        min_depth_of_circuit=min_depth_of_circuit,
                                        max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
-                                       token=token)
+                                       clifford=clifford, token=token)
 
     return jsonify(locations)
 
@@ -380,6 +479,35 @@ def get_analysis():
     return jsonify(benchmarking.analyse())
 
 
+@app.route('/qiskit-service/api/v1.0/analysis/<qpu_name>', methods=['GET'])
+def get_analysis_qpu(qpu_name):
+    """Return analysis of all benchmarks from a specific quantum computer saved in the database"""
+    benchmarks = Benchmark.query.all()
+    list = []
+    for i in range(0, len(benchmarks), 2):
+        if (benchmarks[i].complete and benchmarks[i + 1].complete) and \
+                (benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and \
+                (benchmarks[i].result != "" and benchmarks[i + 1].result != "") and \
+                (benchmarks[i + 1].backend == qpu_name):
+            counts_sim = json.loads(benchmarks[i].counts)
+            counts_real = json.loads(benchmarks[i + 1].counts)
+            shots = benchmarks[i + 1].shots
+            perc_error = analysis.calc_percentage_error(counts_sim, counts_real)
+            correlation = analysis.calc_correlation(counts_sim.copy(), counts_real.copy(), shots)
+            chi_square = analysis.calc_chi_square_distance(counts_sim.copy(), counts_real.copy())
+            intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
+            list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
+                'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
+                'counts-sim': counts_sim,
+                'counts-real': counts_real,
+                'percentage-error': perc_error,
+                'chi-square': chi_square,
+                'correlation': correlation,
+                'histogram-intersection': intersection}
+            })
+    return jsonify(list)
+
+
 @app.route('/qiskit-service/api/v1.0/version', methods=['GET'])
 def version():
     return jsonify({'version': '1.0'})
@@ -396,6 +524,7 @@ def get_benchmark_body(benchmark_backend):
             'transpiled-depth': benchmark_backend.transpiled_depth,
             'transpiled-width': benchmark_backend.transpiled_width,
             'transpiled-number-of-multi-qubit-gates': benchmark_backend.transpiled_number_of_multi_qubit_gates,
+            'clifford': benchmark_backend.clifford,
             'benchmark-id': benchmark_backend.benchmark_id,
             'complete': benchmark_backend.complete,
             'shots': benchmark_backend.shots
