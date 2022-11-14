@@ -2,7 +2,8 @@ from flask_smorest import Blueprint
 
 from app import routes
 from app.model.circuit_response import (
-    BenchmarkResponseSchema
+    BenchmarkResponseSchema,
+    ResultsResponseSchema
 )
 from app.model.calculation_request import (
     BenchmarkRequest,
@@ -36,3 +37,17 @@ blp = Blueprint(
 def encoding(json: BenchmarkRequest):
     if json:
         return routes.randomize(json)
+
+
+@blp.route("/qiskit-service/api/v1.0/results/<id>", methods=["GET"])
+@blp.response(200, ResultsResponseSchema)
+def encoding(json):
+    if json:
+        return
+
+
+@blp.route("/qiskit-service/api/v1.0/benchmarks/<benchmark_id>", methods=["GET"])
+@blp.response(200, ResultsResponseSchema)
+def encoding(json):
+    if json:
+        return

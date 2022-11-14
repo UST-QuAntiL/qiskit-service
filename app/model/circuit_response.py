@@ -68,3 +68,7 @@ class CalcCalibrationMatrixResponseSchema(ma.Schema):
 
 class BenchmarkResponseSchema(ma.Schema):
     list = ma.fields.List(ma.fields.String())
+
+
+class ResultsResponseSchema(ma.Schema):
+    result = ma.fields.List(ma.fields.String())
