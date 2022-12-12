@@ -12,7 +12,7 @@ from app.model.algorithm_request import (
 blp = Blueprint(
     "Execute",
     __name__,
-    description="execute",
+    description="Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result.",
 )
 
 
@@ -38,8 +38,8 @@ blp = Blueprint(
         "token": "YOUR-IBMQ-TOKEN"
     }
 )
-@blp.response(200, ExecuteResponseSchema)
+@blp.response(200, ExecuteResponseSchema, description="Returns a content location for the result. Access it via GET")
 def encoding(json: ExecuteRequest):
     if json:
-        return routes.transpile_circuit()
+        return routes.execute_circuit()
 

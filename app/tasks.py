@@ -37,7 +37,6 @@ import json
 import base64
 
 
-
 def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
@@ -76,14 +75,20 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         app.logger.info('Start transpiling...')
 
         if noise_model:
-            noisy_qpu = get_qpu(kwargs, noise_model)
+            noisy_qpu = ibmq_handler.get_qpu(token, noise_model, **kwargs)
             noise_model = NoiseModel.from_backend(noisy_qpu)
             properties = noisy_qpu.properties()
             configuration = noisy_qpu.configuration()
             coupling_map = configuration.coupling_map
             basis_gates = noise_model.basis_gates
-            transpiled_circuits = transpile(circuits, noisy_qpu)
-            measurement_qubits = get_measurement_qubits_from_transpiled_circuit(transpiled_circuit)
+            try:
+                transpiled_circuits = transpile(circuits, noisy_qpu)
+            except TranspilerError:
+                result = Result.query.get(job.get_id())
+                result.result = json.dumps({'error': 'too many qubits required'})
+                result.complete = True
+                db.session.commit()
+            measurement_qubits = get_measurement_qubits_from_transpiled_circuit(transpiled_circuits)
 
             if only_measurement_errors:
                 ro_noise_model = NoiseModel()
@@ -109,7 +114,6 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
             job_manager = IBMQJobManager()
             job_result = job_manager.run(transpiled_circuits, backend=backend)
 
-
     # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
@@ -128,22 +132,6 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         db.session.commit()
 
     # ibmq_handler.delete_token()
-
-
-def get_qpu(credentials, qpu):
-    """Load account from token. Get backend."""
-    try:
-        try:
-            IBMQ.disable_account()
-        except IBMQAccountCredentialsNotFound:
-            pass
-        finally:
-            provider = IBMQ.enable_account(**credentials)
-            backend = provider.get_backend(qpu)
-            return backend
-    except (QiskitBackendNotFoundError, RequestsApiError):
-        print('Backend could not be retrieved. Backend name or credentials are invalid. Be sure to use the schema credentials: {"token": "YOUR_TOKEN", "hub": "YOUR_HUB", "group": "YOUR GROUP", "project": "YOUR_PROJECT"). Note that "ibm-q/open/main" are assumed as default values for "hub", "group", "project".')
-        return None
 
 
 def get_measurement_qubits_from_transpiled_circuit(transpiled_circuit):

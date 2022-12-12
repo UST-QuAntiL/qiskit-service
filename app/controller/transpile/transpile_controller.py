@@ -12,7 +12,7 @@ from app.model.algorithm_request import (
 blp = Blueprint(
     "Transpile",
     __name__,
-    description="Transpile",
+    description="Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself.",
 )
 
 

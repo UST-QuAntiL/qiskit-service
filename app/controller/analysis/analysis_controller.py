@@ -17,3 +17,9 @@ blp = Blueprint(
 def encoding():
     return routes.analysis
 
+
+@blp.route("/qiskit-service/api/v1.0/analysis/<qpu_name>", methods=["GET"])
+@blp.response(200)
+def encoding():
+    return routes.analysis
+

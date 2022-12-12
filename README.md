@@ -19,7 +19,9 @@ docker-compose up
 ```
 
 Now the qiskit-service is available on http://localhost:5013/.
-
+## API Documentation
+The qiskit-service provides a Swagger UI, specifying the request schemas and showcasing exemplary requests for all API endpoints.
+* http://localhost:5013/api/swagger-ui
 ## Transpilation Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself.
 *Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.

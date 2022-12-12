@@ -72,3 +72,7 @@ class BenchmarkResponseSchema(ma.Schema):
 
 class ResultsResponseSchema(ma.Schema):
     result = ma.fields.List(ma.fields.String())
+
+
+class AnalysisOriginalCircuitResponseSchema(ma.Schema):
+    result = ma.fields.List(ma.fields.String())
