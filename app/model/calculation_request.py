@@ -46,3 +46,7 @@ class AnalysisOriginalCircuitRequestSchema(ma.Schema):
     impl_url = ma.fields.String()
     impl_language = ma.fields.String()
     input_params = ma.fields.List(ma.fields.String())
+
+
+class ProviderSchema(ma.Schema):
+    token = ma.fields.String(required=True)
