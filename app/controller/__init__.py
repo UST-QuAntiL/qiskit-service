@@ -1,6 +1,6 @@
-from app.controller import transpile, execute, calculation, benchmark, analysis, analysis_original_circuit, wd_calc, provider
+from app.controller import transpile, execute, calculation, benchmark, analysis, analysis_original_circuit, wd_calc, provider, result
 
-MODULES = (transpile, execute, calculation, benchmark, analysis, analysis_original_circuit, wd_calc, provider)
+MODULES = (transpile, execute, calculation, benchmark, analysis, analysis_original_circuit, wd_calc, provider, result)
 
 
 def register_blueprints(api):

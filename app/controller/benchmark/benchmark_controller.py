@@ -21,6 +21,9 @@ blp = Blueprint(
 
 
 @blp.route("/qiskit-service/api/v1.0/randomize", methods=["POST"])
+@blp.doc(description="Please make sure that \"number-of-qubits\", \"number-of-circuits\" and "
+                     "\"min-depth-of-circuit\" are greater than 0. "
+                     "Also, \"max-depth-of-cicuit\" has to be greater or equal to \"min-depth-of-circuit\"")
 @blp.arguments(
     BenchmarkRequestSchema,
     example={
@@ -30,20 +33,14 @@ blp = Blueprint(
         "max-depth-of-circuit": 2,
         "number-of-circuits": 3,
         "shots": 1024,
-        "token": "YOUR-IBMQ-TOKEN"
+        "token": "YOUR-IBMQ-TOKEN",
+        "clifford": False
     }
 )
 @blp.response(200, BenchmarkResponseSchema)
 def encoding(json: BenchmarkRequest):
     if json:
         return routes.randomize(json)
-
-
-@blp.route("/qiskit-service/api/v1.0/results/<id>", methods=["GET"])
-@blp.response(200, ResultsResponseSchema)
-def encoding(json):
-    if json:
-        return
 
 
 @blp.route("/qiskit-service/api/v1.0/benchmarks/<benchmark_id>", methods=["GET"])

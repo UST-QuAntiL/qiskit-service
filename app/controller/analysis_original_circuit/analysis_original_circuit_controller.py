@@ -20,17 +20,21 @@ blp = Blueprint(
 @blp.route("/qiskit-service/api/v1.0/analyze-original-circuit", methods=["POST"])
 @blp.arguments(
     AnalysisOriginalCircuitRequestSchema,
+    description='''\
+            \"input-params\" should be of the form:
+            \"input-params\":{
+                \"PARAM-NAME-1\": {
+                    \"rawValue\": \"YOUR-VALUE-1\",
+                    \"type\": \"Integer\"
+                },
+                \"PARAM-NAME-2\": {
+                    \"rawValue\": \"YOUR-VALUE-2\",
+                    \"type\": \"String\"
+            }''',
     example={
         "impl-url": "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py",
         "impl-language": "qiskit",
-        "input-params":
-        {
-            "formula":
-            {
-                "rawValue": "(~A | B)",
-                "type": "String"
-            }
-        }
+        "input-params": {}
     },
 
 )

@@ -17,7 +17,7 @@ blp = Blueprint(
 )
 
 
-@blp.route("/qiskit-service/api/v1.0/calculate-calibration-matrix", methods=["GET"])
+@blp.route("/qiskit-service/api/v1.0/calculate-calibration-matrix", methods=["POST"])
 @blp.arguments(
     CalcCalibrationMatrixRequestSchema,
     example={
@@ -25,7 +25,6 @@ blp = Blueprint(
         "shots": 1024,
         "token": "YOUR-IBMQ-TOKEN"
     }
-
 )
 @blp.response(200, CalcCalibrationMatrixResponseSchema)
 def encoding(json: CalcCalibrationMatrixRequest):

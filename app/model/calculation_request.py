@@ -15,7 +15,7 @@ class CalcCalibrationMatrixRequestSchema(ma.Schema):
 
 
 class BenchmarkRequest:
-    def __init__(self, qpu_name, number_of_qubits, min_depth, max_depth, number_of_circuits, shots, token):
+    def __init__(self, qpu_name, number_of_qubits, min_depth, max_depth, number_of_circuits, shots, token, clifford):
         self.qpu_name = qpu_name
         self.number_of_qubits = number_of_qubits
         self.min_depth = min_depth
@@ -23,6 +23,7 @@ class BenchmarkRequest:
         self.number_of_circuits = number_of_circuits
         self.token = token
         self.shots = shots
+        self.clifford = clifford
 
 
 class BenchmarkRequestSchema(ma.Schema):
@@ -33,6 +34,7 @@ class BenchmarkRequestSchema(ma.Schema):
     number_of_circuits = ma.fields.Int()
     token = ma.fields.String()
     shots = ma.fields.Int()
+    clifford = ma.fields.Boolean()
 
 
 class AnalysisOriginalCircuitRequest:

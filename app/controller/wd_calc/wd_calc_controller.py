@@ -9,7 +9,8 @@ blp = Blueprint(
 
 
 @blp.route("/qiskit-service/api/v1.0/calc-wd/<qpu_name>", methods=["GET"])
-@blp.response(200, description="There needs to be at least 10 data points for each number of qubits and depth to get a meaningful result.")
+@blp.doc(description="There needs to be at least 10 data points for each number of qubits and depth to get a meaningful result.")
+@blp.response(200)
 def encoding():
     return
 
