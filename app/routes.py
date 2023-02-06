@@ -250,13 +250,14 @@ def execute_circuit():
     impl_data = request.json.get('impl-data')
     if type(impl_data) is str:
         impl_data = [impl_data]
-    
 
     transpiled_qasm = request.json.get('transpiled-qasm')
     if type(transpiled_qasm) is str:
         transpiled_qasm = [transpiled_qasm]
     bearer_token = request.json.get("bearer-token", "")
     input_params = request.json.get('input-params', "")
+    noise_model = request.json.get("noise-model")
+    only_measurement_errors = request.json.get("only-measurement-errors")
     optimization_level = request.json.get('transpilation-optimization-level', 3)
     input_params = parameters.ParameterDictionary(input_params)
 
@@ -271,7 +272,6 @@ def execute_circuit():
     if 'project' in input_params:
         credentials['project'] = input_params['project']
 
-
     shots = request.json.get('shots', 1024)
     if 'token' in input_params:
         token = input_params['token']
@@ -282,7 +282,9 @@ def execute_circuit():
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, input_params=input_params, optimization_level=optimization_level, shots=shots, bearer_token=bearer_token,
+                                    token=token, input_params=input_params, noise_model=noise_model,
+                                    only_measurement_errors=only_measurement_errors,
+                                    optimization_level=optimization_level, shots=shots, bearer_token=bearer_token,
                                     qasm_string=qasm_string, **credentials)
 
     result = Result(id=job.get_id(), backend=qpu_name, shots=shots)

@@ -11,3 +11,4 @@ rq
 SQLAlchemy
 gunicorn
 marshmallow
+flask-smorest

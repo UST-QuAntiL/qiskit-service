@@ -27,3 +27,23 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:5040'
+
+    API_TITLE = "qiskit-service"
+    API_VERSION = "0.1"
+    OPENAPI_VERSION = "3.0.2"
+    OPENAPI_URL_PREFIX = "/api"
+    OPENAPI_SWAGGER_UI_PATH = "/swagger-ui"
+    OPENAPI_SWAGGER_UI_VERSION = "3.24.2"
+    OPENAPI_SWAGGER_UI_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.24.2/"
+
+    API_SPEC_OPTIONS = {
+        "info": {
+            "description": "This is the API Specification of the qiskit-service ("
+            "https://github.com/UST-QuAntiL/qiskit-service).",
+        },
+        "license": {"name": "Apache v2 License"},
+    }
+
+    @staticmethod
+    def init_app(app):
+        pass
