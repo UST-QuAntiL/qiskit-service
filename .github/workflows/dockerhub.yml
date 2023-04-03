@@ -10,7 +10,8 @@ on:
       - "paper**"
 
 env:
-  IMAGE_NAME: planqk/qiskit-service
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   multi:
@@ -30,8 +31,9 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push latest qiskit-service
         uses: docker/build-push-action@v4
