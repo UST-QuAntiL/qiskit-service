@@ -154,7 +154,6 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
 
     backend = ibmq_handler.get_qpu(token, qpu_name)
     if not backend:
-        app.logger.info(f"execute_benchmark tables: {list(db.metadata.tables.keys())}")
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
         result.complete = True
