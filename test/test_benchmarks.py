@@ -36,6 +36,7 @@ class BenchmarksTestCase(unittest.TestCase):
 
         self.client = app.test_client()
         db.create_all()
+        print(f"tables: {list(db.metadata.tables.keys())}")
 
         self.create_dummy_results()
 
