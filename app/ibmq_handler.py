@@ -30,15 +30,12 @@ from qiskit.providers.ibmq.api.exceptions import RequestsApiError
 def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group='open', project='main'):
     """Load account from token. Get backend."""
     try:
-        try:
-            IBMQ.disable_account()
-        except:
-            pass
-        provider = IBMQ.enable_account(token=token, url=url, hub=hub, group=group, project=project)
-        backend = provider.get_backend(qpu_name)
-        return backend
-    except (QiskitBackendNotFoundError, RequestsApiError):
-        return None
+        IBMQ.disable_account()
+    except:
+        pass
+    provider = IBMQ.enable_account(token=token, url=url, hub=hub, group=group, project=project)
+    backend = provider.get_backend(qpu_name)
+    return backend
 
 
 def delete_token():
