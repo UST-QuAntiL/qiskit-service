@@ -77,3 +77,5 @@ wrapt==1.14.0
 yfinance==0.1.55
 zipp==3.8.0
 flask-smorest==0.34.0
+pymysql==1.0.3
+psycopg2-binary==2.9.6

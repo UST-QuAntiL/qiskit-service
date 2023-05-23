@@ -12,3 +12,5 @@ SQLAlchemy
 gunicorn
 marshmallow
 flask-smorest
+psycopg2-binary
+pymysql
