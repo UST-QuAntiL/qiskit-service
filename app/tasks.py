@@ -22,12 +22,9 @@ from app import implementation_handler, ibmq_handler, db, app
 from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
-from qiskit.providers.ibmq.managed import IBMQJobManager
 from qiskit.utils.measurement_error_mitigation import get_measured_qubits
 from qiskit.providers.aer import AerSimulator
 from qiskit.providers.aer.noise import NoiseModel
-from qiskit.providers.ibmq.api.exceptions import RequestsApiError
-from qiskit.providers import QiskitBackendNotFoundError
 from qiskit import IBMQ, transpile, QuantumCircuit
 
 from app.NumpyEncoder import NumpyEncoder
@@ -98,9 +95,6 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
 
             backend = AerSimulator()
 
-            app.logger.info('Start executing...')
-            job_manager = IBMQJobManager()
-            job_result = job_manager.run(transpiled_circuits, backend=backend, noise_model=noise_model)
         else:
             try:
                 transpiled_circuits = transpile(circuits, backend=backend, optimization_level=optimization_level)
@@ -110,19 +104,12 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
                 result.complete = True
                 db.session.commit()
 
-            app.logger.info('Start executing...')
-            job_manager = IBMQJobManager()
-            job_result = job_manager.run(transpiled_circuits, backend=backend)
+    app.logger.info('Start executing...')
+    job_result = ibmq_handler.execute_job(transpiled_circuits, shots, backend, noise_model)
 
-    # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result_counts = []
-        for i, circ in enumerate(transpiled_circuits):
-            result_counts.append(job_result.results().get_counts(i))
-        if len(result_counts) == 1:
-            result_counts = result_counts[0]
-        result.result = json.dumps(result_counts)
+        result.result = json.dumps(job_result['counts'])
         result.complete = True
         db.session.commit()
     else:
