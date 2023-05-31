@@ -148,7 +148,7 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
     transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
 
     app.logger.info('Start executing...')
-    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
+    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend, None)
     if job_result:
         # once the job is finished save results in db
         result = Result.query.get(job.get_id())
