@@ -19,13 +19,11 @@
 import datetime
 
 from app import implementation_handler, ibmq_handler, db, app
-from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 from qiskit.utils.measurement_error_mitigation import get_measured_qubits
-from qiskit.providers.aer import AerSimulator
-from qiskit.providers.aer.noise import NoiseModel
-from qiskit import IBMQ, transpile, QuantumCircuit
+from qiskit_aer.noise import NoiseModel
+from qiskit import transpile, QuantumCircuit, Aer
 
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
@@ -93,7 +91,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
                     ro_noise_model.add_readout_error(v, k)
                 noise_model = ro_noise_model
 
-            backend = AerSimulator()
+            backend = Aer.get_backend('aer_simulator')
 
         else:
             try:
