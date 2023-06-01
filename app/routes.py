@@ -331,27 +331,28 @@ def calc_wd(qpu_name):
     return jsonify(wd)
 
 
-@app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
-def randomize():
-    """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
-    if not request.json:
-        abort(400)
-
-    qpu_name = request.json['qpu-name']
-    num_of_qubits = request.json['number-of-qubits']
-    min_depth_of_circuit = request.json['min-depth-of-circuit']
-    max_depth_of_circuit = request.json['max-depth-of-circuit']
-    num_of_circuits = request.json['number-of-circuits']
-    clifford = request.json.get('clifford', False)
-    shots = request.json.get('shots', 1024)
-    token = request.json['token']
-
-    locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
-                                       min_depth_of_circuit=min_depth_of_circuit,
-                                       max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
-                                       clifford=clifford, token=token)
-
-    return jsonify(locations)
+# TODO: after Qiskit ignis is deprecated, the generation of Clifford gate circuits has to be adapted
+# @app.route('/qiskit-service/api/v1.0/randomize', methods=['POST'])
+# def randomize():
+#     """Create randomized circuits of given properties to run benchmarks and return locations to their results"""
+#     if not request.json:
+#         abort(400)
+#
+#     qpu_name = request.json['qpu-name']
+#     num_of_qubits = request.json['number-of-qubits']
+#     min_depth_of_circuit = request.json['min-depth-of-circuit']
+#     max_depth_of_circuit = request.json['max-depth-of-circuit']
+#     num_of_circuits = request.json['number-of-circuits']
+#     clifford = request.json.get('clifford', False)
+#     shots = request.json.get('shots', 1024)
+#     token = request.json['token']
+#
+#     locations = benchmarking.randomize(qpu_name=qpu_name, num_of_qubits=num_of_qubits, shots=shots,
+#                                        min_depth_of_circuit=min_depth_of_circuit,
+#                                        max_depth_of_circuit=max_depth_of_circuit, num_of_circuits=num_of_circuits,
+#                                        clifford=clifford, token=token)
+#
+#     return jsonify(locations)
 
 
 @app.route('/qiskit-service/api/v1.0/results/<result_id>', methods=['GET'])
