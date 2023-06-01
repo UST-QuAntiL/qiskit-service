@@ -122,15 +122,15 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_lima_file(self):
+    def test_transpile_circuit_lima_file(self):
 
         # prepare the request
-        file_path = (os.path.dirname(__file__))+'/data/shor-fix-15.py'
+        file_path = (os.path.dirname(__file__))+'/data/pattern0-3_1_2nCliffs10seed2.qasm'
         with open(file_path, 'rb') as f:
             impl_data = base64.b64encode(f.read()).decode()
         request = {
             'impl-data': impl_data,
-            'impl-language': 'Qiskit',
+            'impl-language': 'openqasm',
             'qpu-name': "ibmq_lima",
             'input-params': {},
             'token': os.environ["QISKIT_TOKEN"]
@@ -193,10 +193,10 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_nairobi_file_qasm(self):
+    def test_transpile_circuit_nairobi_file_qasm(self):
 
         # prepare the request
-        file_path = (os.path.dirname(__file__))+'/data/shor-fix-15.qasm'
+        file_path = (os.path.dirname(__file__))+'/data/pattern0-3_1_2nCliffs10seed2.qasm'
         with open(file_path, 'rb') as f:
             impl_data = base64.b64encode(f.read()).decode()
         request = {
@@ -230,66 +230,67 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_simulator(self):
-        # prepare the request
-        request = {
-            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
-            'qpu-name': "ibmq_qasm_simulator",
-            'input-params': {
-                'N': {
-                    'rawValue': "9",
-                    'type': 'Integer'
-                }
-            },
-            'token': os.environ["QISKIT_TOKEN"]
-        }
+    # def test_transpile_shor_simulator(self):
+    #     # this test is deprecated, as Shor is no longer natively supported by newer versions of Qiskit
+    #     # prepare the request
+    #     request = {
+    #         'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
+    #         'qpu-name': "ibmq_qasm_simulator",
+    #         'input-params': {
+    #             'N': {
+    #                 'rawValue': "9",
+    #                 'type': 'Integer'
+    #             }
+    #         },
+    #         'token': os.environ["QISKIT_TOKEN"]
+    #     }
+    #
+    #     # send the request
+    #     response = self.client.post('/qiskit-service/api/v1.0/transpile',
+    #                                 json=request)
+    #
+    #     self.assertEqual(response.status_code, 200)
+    #     json_data = response.get_json()
+    #     self.assertIn("width", json_data)
+    #     self.assertIn("depth", json_data)
+    #     self.assertIsNotNone(json_data['depth'])
+    #     self.assertIsNotNone(json_data['width'])
+    #     self.assertIn('transpiled-qasm', json_data)
+    #     self.assertIn("total-number-of-operations", json_data)
+    #     self.assertIn("number-of-multi-qubit-gates", json_data)
+    #     self.assertIn("multi-qubit-gate-depth", json_data)
+    #     self.assertIsNotNone(json_data["total-number-of-operations"])
+    #     self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
+    #     self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
+    #     self.assertIsNotNone(json_data.get('transpiled-qasm'))
+    #
+    #     r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
+    #     self.assertEqual(r.status_code, 202)
+    #     print(r.headers.get("Location"))
 
-        # send the request
-        response = self.client.post('/qiskit-service/api/v1.0/transpile',
-                                    json=request)
-
-        self.assertEqual(response.status_code, 200)
-        json_data = response.get_json()
-        self.assertIn("width", json_data)
-        self.assertIn("depth", json_data)
-        self.assertIsNotNone(json_data['depth'])
-        self.assertIsNotNone(json_data['width'])
-        self.assertIn('transpiled-qasm', json_data)
-        self.assertIn("total-number-of-operations", json_data)
-        self.assertIn("number-of-multi-qubit-gates", json_data)
-        self.assertIn("multi-qubit-gate-depth", json_data)
-        self.assertIsNotNone(json_data["total-number-of-operations"])
-        self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
-        self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
-        self.assertIsNotNone(json_data.get('transpiled-qasm'))
-
-        r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
-        self.assertEqual(r.status_code, 202)
-        print(r.headers.get("Location"))
-
-    def test_transpile_shor_nairobi(self):
-
-        # prepare the request
-        request = {
-            'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
-            'qpu-name': "ibm_nairobi",
-            'input-params': {
-                'N': {
-                    'rawValue': "9",
-                    'type': 'Integer'
-                }
-            },
-            'token': os.environ["QISKIT_TOKEN"]
-        }
-
-        # send the request
-        response = self.client.post('/qiskit-service/api/v1.0/transpile',
-                                    json=request)
-
-        self.assertEqual(response.status_code, 200)
-        json_data = response.get_json()
-        self.assertIn("error", json_data)
-        self.assertIn("too many qubits", json_data['error'])
+    # def test_transpile_shor_nairobi(self):
+    #     # this test is deprecated, as Shor is no longer natively supported by newer versions of Qiskit
+    #     # prepare the request
+    #     request = {
+    #         'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
+    #         'qpu-name': "ibm_nairobi",
+    #         'input-params': {
+    #             'N': {
+    #                 'rawValue': "9",
+    #                 'type': 'Integer'
+    #             }
+    #         },
+    #         'token': os.environ["QISKIT_TOKEN"]
+    #     }
+    #
+    #     # send the request
+    #     response = self.client.post('/qiskit-service/api/v1.0/transpile',
+    #                                 json=request)
+    #
+    #     self.assertEqual(response.status_code, 200)
+    #     json_data = response.get_json()
+    #     self.assertIn("error", json_data)
+    #     self.assertIn("too many qubits", json_data['error'])
 
     @unittest.skip("PlanQK access token required")
     def test_transpile_shor_simulator_planqk_url(self):
