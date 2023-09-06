@@ -244,12 +244,14 @@ def execute_circuit():
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
-    qasm_string = request.json.get('qasm-string', "")
     if type(impl_url) is str:
         impl_url = [impl_url]
     impl_data = request.json.get('impl-data')
     if type(impl_data) is str:
         impl_data = [impl_data]
+    qasm_string = request.json.get('qasm-string')
+    if type(qasm_string) is str:
+        qasm_string = [qasm_string]
 
     transpiled_qasm = request.json.get('transpiled-qasm')
     if type(transpiled_qasm) is str:

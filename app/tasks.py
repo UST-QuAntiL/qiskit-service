@@ -49,7 +49,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         transpiled_circuits = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
     else:
         if qasm_string:
-            circuits = implementation_handler.prepare_code_from_qasm(qasm_string)
+            circuits = [implementation_handler.prepare_code_from_qasm(qasm) for qasm in qasm_string]
         elif impl_url:
             if impl_language.lower() == 'openqasm':
                 # list of circuits
