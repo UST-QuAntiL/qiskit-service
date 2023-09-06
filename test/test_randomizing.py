@@ -49,6 +49,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertTrue("version" in json_data)
         self.assertEqual(json_data['version'], "1.0")
 
+    @unittest.skip("Has to be adapted as the benchmarking via Qiskit ignis is deprecated")
     def test_randomize_full_request(self):
 
         # prepare the request
@@ -75,6 +76,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("result-simulator", json_data[0])
         self.assertIn("result-real-backend", json_data[0])
 
+    @unittest.skip("Has to be adapted as the benchmarking via Qiskit ignis is deprecated")
     def test_randomize_no_shots_request(self):
 
         # prepare the request
@@ -99,6 +101,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("result-simulator", json_data[0])
         self.assertIn("result-real-backend", json_data[0])
 
+    @unittest.skip("Has to be adapted as the benchmarking via Qiskit ignis is deprecated")
     def test_randomize_no_clifford_request(self):
 
         # prepare the request
@@ -122,6 +125,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("result-simulator", json_data[0])
         self.assertIn("result-real-backend", json_data[0])
 
+    @unittest.skip("Has to be adapted as the benchmarking via Qiskit ignis is deprecated")
     def test_randomize_clifford_full_request(self):
 
         # prepare the request
