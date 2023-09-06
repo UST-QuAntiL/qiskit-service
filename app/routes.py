@@ -18,7 +18,7 @@
 # ******************************************************************************
 from qiskit.providers.ibmq import IBMQAccountError
 
-from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
+from app import app, benchmarking, aws_handler, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
 from app.benchmark_model import Benchmark
 from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
 from app.result_model import Result
@@ -37,6 +37,8 @@ def transpile_circuit():
     if not request.json or not 'qpu-name' in request.json:
         abort(400)
 
+    # Default value is ibmq for services that do not support multiple providers and expect the IBMQ provider
+    provider = request.json.get('provider', 'ibmq')
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
@@ -49,17 +51,6 @@ def transpile_circuit():
         token = request.json.get('token')
     else:
         abort(400)
-
-
-    credentials = {}
-    if 'url' in input_params:
-        credentials['url'] = input_params['url']
-    if 'hub' in input_params:
-        credentials['hub'] = input_params['hub']
-    if 'group' in input_params:
-        credentials['group'] = input_params['group']
-    if 'project' in input_params:
-        credentials['project'] = input_params['project']
 
     if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
@@ -115,13 +106,26 @@ def transpile_circuit():
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
         return jsonify({'error': str(e)}), 200
 
-    backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
+    backend = None
+    if provider == 'ibmq':
+        credentials = {}
+        if 'url' in input_params:
+            credentials['url'] = input_params['url']
+        if 'hub' in input_params:
+            credentials['hub'] = input_params['hub']
+        if 'group' in input_params:
+            credentials['group'] = input_params['group']
+        if 'project' in input_params:
+            credentials['project'] = input_params['project']
+        backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
+    elif provider == 'aws':
+        backend = aws_handler.get_qpu(qpu_name)
     if not backend:
-        # ibmq_handler.delete_token()
         app.logger.warn(f"{qpu_name} not found.")
         abort(404)
 
     try:
+        # TODO: Not sure whether this call will work for AWS?
         transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
         print("Transpiled Circuit")
         print(transpiled_circuit)
@@ -241,6 +245,9 @@ def execute_circuit():
     """Put execution jobs in queue. Return location of the later results."""
     if not request.json or not 'qpu-name' in request.json:
         abort(400)
+
+    # Default value is ibmq for services that do not support multiple providers and expect the IBMQ provider
+    provider = request.json.get('provider', 'ibmq')
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
@@ -280,7 +287,7 @@ def execute_circuit():
     else:
         abort(400)
 
-    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
+    job = app.execute_queue.enqueue('app.tasks.execute', provider=provider, impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
                                     token=token, input_params=input_params, noise_model=noise_model,
                                     only_measurement_errors=only_measurement_errors,
@@ -449,6 +456,11 @@ def get_providers():
                     "id": str(generate_deterministic_uuid("ibmq", "provider")),
                     "name": "ibmq",
                     "offeringURL": "https://quantum-computing.ibm.com/",
+                },
+                {
+                    "id": str(generate_deterministic_uuid("aws", "provider")),
+                    "name": "aws",
+                    "offeringURL": "https://aws.amazon.com/braket/",
                 }
             ]
         }

@@ -18,16 +18,13 @@
 # ******************************************************************************
 import datetime
 
-from app import implementation_handler, ibmq_handler, db, app
-from qiskit import transpile, QuantumCircuit
+from app import implementation_handler, aws_handler, ibmq_handler, db, app
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 from qiskit.providers.ibmq.managed import IBMQJobManager
 from qiskit.utils.measurement_error_mitigation import get_measured_qubits
 from qiskit.providers.aer import AerSimulator
 from qiskit.providers.aer.noise import NoiseModel
-from qiskit.providers.ibmq.api.exceptions import RequestsApiError
-from qiskit.providers import QiskitBackendNotFoundError
 from qiskit import IBMQ, transpile, QuantumCircuit
 
 from app.NumpyEncoder import NumpyEncoder
@@ -37,12 +34,15 @@ import json
 import base64
 
 
-def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
+def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
 
-    backend = ibmq_handler.get_qpu(token, qpu_name, **kwargs)
+    if provider == 'ibmq':
+        backend = ibmq_handler.get_qpu(token, qpu_name, **kwargs)
+    elif provider == 'aws':
+        backend = aws_handler.get_qpu(qpu_name)
     if not backend:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
@@ -111,10 +111,15 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
                 db.session.commit()
 
             app.logger.info('Start executing...')
-            job_manager = IBMQJobManager()
-            job_result = job_manager.run(transpiled_circuits, backend=backend)
+            if provider == 'ibmq':
+                job_manager = IBMQJobManager()
+                job_result = job_manager.run(transpiled_circuits, backend=backend, shots=shots)
+            elif provider == 'aws':
+                # TODO: Not sure how to do this:
+                #  - Why does this not use the handlers?
+                #  - Why do we 'analyze' the results here and not use handler code?
+                #  - Does this need to execute multiple circuits?
 
-    # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
         result_counts = []
@@ -141,7 +146,7 @@ def get_measurement_qubits_from_transpiled_circuit(transpiled_circuit):
     return measurement_qubits
 
 
-def convertInSuitableFormat(object):
+def convert_into_suitable_format(object):
     """Enables the serialization of the unserializable datetime.datetime format"""
     if isinstance(object, datetime.datetime):
         return object.__str__()
@@ -167,11 +172,11 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
     if job_result:
         # once the job is finished save results in db
         result = Result.query.get(job.get_id())
-        result.result = json.dumps(job_result, default=convertInSuitableFormat)
+        result.result = json.dumps(job_result, default=convert_into_suitable_format)
         result.complete = True
 
         benchmark = Benchmark.query.get(job.get_id())
-        benchmark.result = json.dumps(job_result, default=convertInSuitableFormat)
+        benchmark.result = json.dumps(job_result, default=convert_into_suitable_format)
         benchmark.counts = json.dumps(job_result['counts'])
         benchmark.complete = True
 
