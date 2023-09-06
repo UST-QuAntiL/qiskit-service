@@ -19,16 +19,11 @@
 import datetime
 
 from app import implementation_handler, ibmq_handler, db, app
-from qiskit import transpile, QuantumCircuit
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
-from qiskit.providers.ibmq.managed import IBMQJobManager
 from qiskit.utils.measurement_error_mitigation import get_measured_qubits
-from qiskit.providers.aer import AerSimulator
-from qiskit.providers.aer.noise import NoiseModel
-from qiskit.providers.ibmq.api.exceptions import RequestsApiError
-from qiskit.providers import QiskitBackendNotFoundError
-from qiskit import IBMQ, transpile, QuantumCircuit
+from qiskit_aer.noise import NoiseModel
+from qiskit import transpile, QuantumCircuit, Aer
 
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
@@ -54,7 +49,7 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
         transpiled_circuits = [QuantumCircuit.from_qasm_str(qasm) for qasm in transpiled_qasm]
     else:
         if qasm_string:
-            circuits = implementation_handler.prepare_code_from_qasm(qasm_string)
+            circuits = [implementation_handler.prepare_code_from_qasm(qasm) for qasm in qasm_string]
         elif impl_url:
             if impl_language.lower() == 'openqasm':
                 # list of circuits
@@ -96,11 +91,8 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
                     ro_noise_model.add_readout_error(v, k)
                 noise_model = ro_noise_model
 
-            backend = AerSimulator()
+            backend = Aer.get_backend('aer_simulator')
 
-            app.logger.info('Start executing...')
-            job_manager = IBMQJobManager()
-            job_result = job_manager.run(transpiled_circuits, backend=backend, noise_model=noise_model)
         else:
             try:
                 transpiled_circuits = transpile(circuits, backend=backend, optimization_level=optimization_level)
@@ -110,19 +102,12 @@ def execute(impl_url, impl_data, impl_language, transpiled_qasm, input_params, t
                 result.complete = True
                 db.session.commit()
 
-            app.logger.info('Start executing...')
-            job_manager = IBMQJobManager()
-            job_result = job_manager.run(transpiled_circuits, backend=backend)
+    app.logger.info('Start executing...')
+    job_result = ibmq_handler.execute_job(transpiled_circuits, shots, backend, noise_model)
 
-    # job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
     if job_result:
         result = Result.query.get(job.get_id())
-        result_counts = []
-        for i, circ in enumerate(transpiled_circuits):
-            result_counts.append(job_result.results().get_counts(i))
-        if len(result_counts) == 1:
-            result_counts = result_counts[0]
-        result.result = json.dumps(result_counts)
+        result.result = json.dumps(job_result['counts'])
         result.complete = True
         db.session.commit()
     else:
@@ -163,7 +148,7 @@ def execute_benchmark(transpiled_qasm, token, qpu_name, shots):
     transpiled_circuit = QuantumCircuit.from_qasm_str(transpiled_qasm)
 
     app.logger.info('Start executing...')
-    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend)
+    job_result = ibmq_handler.execute_job(transpiled_circuit, shots, backend, None)
     if job_result:
         # once the job is finished save results in db
         result = Result.query.get(job.get_id())

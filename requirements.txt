@@ -38,11 +38,13 @@ Pygments==2.14.0
 python-constraint==1.4.0
 python-dateutil==2.8.2
 pytz==2023.3
-qiskit==0.35.0
-qiskit-aer==0.10.3
-qiskit-ibmq-provider==0.18.3
-qiskit-ignis==0.7.0
-qiskit-terra==0.20.0
+qiskit==0.43.0
+qiskit-aer==0.12.0
+qiskit-dynamics==0.4.0
+qiskit-experiments==0.5.2
+qiskit-ibm-experiment==0.3.3
+qiskit-ibmq-provider==0.20.2
+qiskit-terra==0.24.0
 redis==4.3.1
 requests==2.27.1
 requests-ntlm==1.1.0
@@ -53,7 +55,7 @@ scipy==1.10.1
 six==1.16.0
 SQLAlchemy==1.4.47
 stevedore==5.0.0
-symengine==0.10.0
+symengine==0.9
 sympy==1.11.1
 tweedledum==1.1.1
 typing_extensions==4.5.0

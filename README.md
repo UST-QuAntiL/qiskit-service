@@ -23,6 +23,8 @@ Now the qiskit-service is available on http://localhost:5013/.
 The qiskit-service provides a Swagger UI, specifying the request schemas and showcasing exemplary requests for all API endpoints.
 * http://localhost:5013/api/swagger-ui
 
+_Note_: To run the setup as a developer, see [here](./docs/dev/run-as-dev.md).
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).
