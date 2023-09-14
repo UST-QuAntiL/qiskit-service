@@ -25,6 +25,13 @@ The qiskit-service provides a Swagger UI, specifying the request schemas and sho
 
 _Note_: To run the setup as a developer, see [here](./docs/dev/run-as-dev.md).
 
+## Using AWS Braket QPUs
+To execute quantum circuits on AWS Braket QPUs via the qiskit service, an AWS IAM account with the Braket Group membership is required.
+The AWS access key and the AWS secret access key have to be provided in the request json body to transpile or execute quantum circuits for/on AWS Braket QPUs.
+
+_Note_: The default region for this request is `eu-west-2` (Europe London) but can also be changed by providing the region under the `region` key within the `input_params` in the request json body.
+Do note though that the region has to be selected depending on the QPU to use. For more details, see [here](https://docs.aws.amazon.com/braket/latest/developerguide/braket-regions.html).
+
 ## Sample Implementations for Transpilation and Execution
 Sample implementations can be found [here](https://github.com/UST-QuAntiL/nisq-analyzer-content/tree/master/example-implementations).
 Please use the raw GitHub URL as `impl-url` value (see [example](https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Shor/shor-general-qiskit.py)).

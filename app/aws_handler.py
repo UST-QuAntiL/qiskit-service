@@ -23,7 +23,7 @@ from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit import QiskitError
 
 
-def get_qpu(access_key, secret_access_key, qpu_name, region_name='us-west-1'):
+def get_qpu(access_key, secret_access_key, qpu_name, region_name='eu-west-2'):
     boto_session = boto3.Session(
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_access_key,
