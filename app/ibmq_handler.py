@@ -24,8 +24,6 @@ from qiskit.providers.ibmq import IBMQ
 from qiskit.compiler import assemble
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
-from qiskit.providers.exceptions import QiskitBackendNotFoundError
-from qiskit.providers.ibmq.api.exceptions import RequestsApiError
 
 
 def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group='open', project='main'):

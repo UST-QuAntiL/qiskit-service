@@ -17,14 +17,23 @@
 #  limitations under the License.
 # ******************************************************************************
 from qiskit_braket_provider import AWSBraketProvider
+from braket.aws.aws_session import AwsSession
+import boto3
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit import QiskitError
 
 
-def get_qpu(qpu_name):
+def get_qpu(access_key, secret_access_key, qpu_name, region_name='us-west-1'):
+    boto_session = boto3.Session(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_access_key,
+        region_name=region_name
+    )
+    session = AwsSession(boto_session)
     provider = AWSBraketProvider()
-    backend = provider.get_backend(qpu_name)
+    backend = provider.get_backend(qpu_name, aws_session=session)
     return backend
+
 
 def execute_job(transpiled_circuit, shots, backend):
     """Generate qObject from transpiled circuit and execute it. Return result."""
@@ -43,7 +52,6 @@ def execute_job(transpiled_circuit, shots, backend):
         job_result_dict = job_result.to_dict()
         print(job_result_dict)
 
-        # TODO: I am currently not sure whether this is still consistent in AWS Braket as they use the getCounts method, we will see when we try
         try:
             statevector = job_result.get_statevector()
             print("\nState vector:")

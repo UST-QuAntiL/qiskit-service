@@ -22,9 +22,7 @@ from app import implementation_handler, aws_handler, ibmq_handler, db, app
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 from qiskit.utils.measurement_error_mitigation import get_measured_qubits
-from qiskit.providers.aer import AerSimulator
-from qiskit.providers.aer.noise import NoiseModel
-from qiskit import IBMQ, transpile, QuantumCircuit
+
 from qiskit_aer.noise import NoiseModel
 from qiskit import transpile, QuantumCircuit, Aer
 
@@ -35,15 +33,19 @@ import json
 import base64
 
 
-def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, qpu_name, optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
+def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token_ibmq, access_key_aws,
+            secret_access_key_aws, qpu_name,
+            optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
 
     if provider == 'ibmq':
-        backend = ibmq_handler.get_qpu(token, qpu_name, **kwargs)
+        backend = ibmq_handler.get_qpu(token_ibmq, qpu_name, **kwargs)
     elif provider == 'aws':
-        backend = aws_handler.get_qpu(qpu_name)
+        backend = aws_handler.get_qpu(access_key=access_key_aws, secret_access_key=secret_access_key_aws,
+                                      qpu_name=qpu_name,
+                                      **kwargs)
     if not backend:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
@@ -61,7 +63,8 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
                 # list of circuits
                 circuits = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
             else:
-                circuits = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in impl_url]
+                circuits = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in
+                            impl_url]
         elif impl_data:
             impl_data = [base64.b64decode(data.encode()).decode() for data in impl_data]
             if impl_language.lower() == 'openqasm':
@@ -76,7 +79,7 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
         app.logger.info('Start transpiling...')
 
         if noise_model:
-            noisy_qpu = ibmq_handler.get_qpu(token, noise_model, **kwargs)
+            noisy_qpu = ibmq_handler.get_qpu(token_ibmq, noise_model, **kwargs)
             noise_model = NoiseModel.from_backend(noisy_qpu)
             properties = noisy_qpu.properties()
             configuration = noisy_qpu.configuration()
@@ -109,7 +112,12 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
                 db.session.commit()
 
     app.logger.info('Start executing...')
-    job_result = ibmq_handler.execute_job(transpiled_circuits, shots, backend, noise_model)
+    if provider == 'aws' and not noise_model:
+        # Note: AWS cannot handle such a noise model
+        job_result = aws_handler.execute_job(transpiled_circuits, shots, backend)
+    else:
+        # If we need a noise model, we have to use IBM Q
+        job_result = ibmq_handler.execute_job(transpiled_circuits, shots, backend, noise_model)
 
     if job_result:
         result = Result.query.get(job.get_id())
@@ -121,8 +129,6 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
         result.result = json.dumps({'error': 'execution failed'})
         result.complete = True
         db.session.commit()
-
-    # ibmq_handler.delete_token()
 
 
 def get_measurement_qubits_from_transpiled_circuit(transpiled_circuit):
