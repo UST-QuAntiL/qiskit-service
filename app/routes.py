@@ -286,6 +286,10 @@ def execute_circuit():
     optimization_level = request.json.get('transpilation-optimization-level', 3)
     input_params = parameters.ParameterDictionary(input_params)
 
+    token = ''
+    aws_access_ket_id = ''
+    aws_secret_access_key = ''
+
     if provider == 'ibmq':
         if 'token' in input_params:
             token = input_params['token']
