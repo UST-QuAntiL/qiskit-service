@@ -25,6 +25,8 @@ jobs:
           tags: |
             # set latest tag for master branch
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            # set tag when a tag is pushed
+            type=ref,event=tag
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to DockerHub
