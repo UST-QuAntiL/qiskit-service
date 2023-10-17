@@ -122,7 +122,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_circuit_lima_file(self):
+    def test_transpile_circuit_perth_file(self):
 
         # prepare the request
         file_path = (os.path.dirname(__file__))+'/data/pattern0-3_1_2nCliffs10seed2.qasm'
@@ -131,7 +131,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'openqasm',
-            'qpu-name': "ibmq_lima",
+            'qpu-name': "ibm_perth",
             'input-params': {},
             'token': os.environ["QISKIT_TOKEN"]
         }
@@ -159,13 +159,13 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_lima_url_qasm(self):
+    def test_transpile_shor_perth_url_qasm(self):
 
         # prepare the request
         request = {
             'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
             'impl-language': 'OpenQASM',
-            'qpu-name': "ibmq_lima",
+            'qpu-name': "ibm_perth",
             'input-params': {},
             'token': os.environ["QISKIT_TOKEN"]
         }
@@ -355,7 +355,7 @@ class TranspileTestCase(unittest.TestCase):
             'impl-language': 'Qiskit',
             'qpu-name': "aer_qasm_simulator",
             'input-params': {},
-            "noise_model": "ibmq_lima",
+            "noise_model": "ibm_perth",
             'token': token
         }
         response = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
@@ -369,7 +369,7 @@ class TranspileTestCase(unittest.TestCase):
             'impl-language': 'Qiskit',
             'qpu-name': "aer_qasm_simulator",
             'input-params': {},
-            "noise_model": "ibmq_lima",
+            "noise_model": "ibm_perth",
             "only-measurement-errors": "True",
             'token': token
         }
