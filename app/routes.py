@@ -287,7 +287,7 @@ def execute_circuit():
     input_params = parameters.ParameterDictionary(input_params)
 
     token = ''
-    aws_access_ket_id = ''
+    aws_access_key_id = ''
     aws_secret_access_key = ''
 
     if provider == 'ibmq':
