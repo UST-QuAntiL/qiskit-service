@@ -318,7 +318,6 @@ def execute_circuit():
             credentials['group'] = input_params['group']
         if 'project' in input_params:
             credentials['project'] = input_params['project']
-        backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
     elif provider == 'aws':
         if 'region' in input_params:
             credentials['region'] = input_params['region']
