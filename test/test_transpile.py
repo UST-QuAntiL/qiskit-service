@@ -133,7 +133,7 @@ class TranspileTestCase(unittest.TestCase):
             'impl-language': 'openqasm',
             'qpu-name': "ibm_perth",
             'input-params': {},
-            'token': os.environ["QISKIT_TOKEN"]
+            'token': os.environ.get("QISKIT_TOKEN", "")
         }
 
         # send the request
@@ -192,6 +192,40 @@ class TranspileTestCase(unittest.TestCase):
         r = self.client.post('/qiskit-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
+
+    def test_transpile_file_qasm_aws(self):
+        circuit = random_circuit(5, 3, seed=42)
+        circuit = circuit.qasm()
+        impl_data = base64.b64encode(circuit.encode()).decode()
+        # prepare the request
+        request = {
+            'impl-data': impl_data,
+            'impl-language': 'OpenQASM',
+            'provider': 'aws',
+            'qpu-name': "Aria 2",
+            'input-params': {},
+            'aws_access_key_id': os.environ.get("QISKIT_AWS_TOKEN", ""),
+            'aws_secret_access_key': os.environ.get("QISKIT_AWS_SECRET", "")
+        }
+
+        # send the request
+        response = self.client.post('/qiskit-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertIsNotNone(json_data['depth'])
+        self.assertIsNotNone(json_data['width'])
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIn("total-number-of-operations", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIsNotNone(json_data["total-number-of-operations"])
+        self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
+        self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
 
     def test_transpile_circuit_nairobi_file_qasm(self):
 

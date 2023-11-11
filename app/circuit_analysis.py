@@ -64,4 +64,4 @@ def get_multi_qubit_gate_depth(transpiled_circuit):
 def get_number_of_measurement_operations(transpiled_circuit):
     """ Get number of measurement operations in the transpiled circuit """
     transpiled_dag = circuit_to_dag(transpiled_circuit)
-    return transpiled_dag.count_ops().get('measure')
+    return transpiled_dag.count_ops().get('measure', 0)

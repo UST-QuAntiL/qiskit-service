@@ -94,7 +94,7 @@ def transpile_circuit():
         abort(400)
 
     try:
-        print("circuit", circuit)
+        print(f"Circuit:\n{circuit}")
         non_transpiled_depth_old = 0
         non_transpiled_depth = circuit.depth()
         while non_transpiled_depth_old < non_transpiled_depth:
@@ -115,7 +115,6 @@ def transpile_circuit():
             app.logger.warn(f"{short_impl_name} not found.")
             abort(404)
     except Exception as e:
-
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
         return jsonify({'error': str(e)}), 200
 
@@ -141,9 +140,11 @@ def transpile_circuit():
         abort(404)
 
     try:
-        transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
-        print("Transpiled Circuit")
-        print(transpiled_circuit)
+        if provider == 'aws':
+            transpiled_circuit = transpile(circuit, backend=backend)
+        else:
+            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
+        print(f"Transpiled Circuit:\n{transpiled_circuit}")
         width = circuit_analysis.get_width_of_circuit(transpiled_circuit)
         depth = transpiled_circuit.depth()
         total_number_of_operations = transpiled_circuit.size()
@@ -152,8 +153,6 @@ def transpile_circuit():
         number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - \
                                        number_of_measurement_operations
         multi_qubit_gate_depth, transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
-        print("After all")
-        print(transpiled_circuit)
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
