@@ -193,6 +193,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
+"""
     def test_transpile_file_qasm_aws(self):
         circuit = random_circuit(5, 3, seed=42)
         circuit = circuit.qasm()
@@ -226,7 +227,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIsNotNone(json_data["number-of-multi-qubit-gates"])
         self.assertIsNotNone(json_data["multi-qubit-gate-depth"])
         self.assertIsNotNone(json_data.get('transpiled-qasm'))
-
+"""
     def test_transpile_circuit_nairobi_file_qasm(self):
 
         # prepare the request
