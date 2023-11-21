@@ -45,7 +45,8 @@ def transpile_circuit():
     input_params = request.json.get('input-params', "")
     impl_url = request.json.get('impl-url', "")
     bearer_token = request.json.get("bearer-token", "")
-    input_params = parameters.ParameterDictionary(input_params)
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
 
     if provider == 'ibmq':
         if 'token' in input_params:
@@ -55,12 +56,12 @@ def transpile_circuit():
         else:
             abort(400)
     elif provider == 'aws':
-        if 'aws_access_key_id' in input_params and 'aws_secret_access_key' in input_params:
-            aws_access_key_id = input_params['aws_access_key_id']
+        if 'aws-access-key-id' in input_params and 'aws-secret-access-key' in input_params:
+            aws_access_key_id = input_params['aws-access-key-id']
             aws_secret_access_key = input_params['aws_secret_access_key']
-        elif 'aws_access_key_id' in request.json and 'aws_secret_access_key' in request.json:
-            aws_access_key_id = request.json.get('aws_access_key_id')
-            aws_secret_access_key = request.json.get('aws_secret_access_key')
+        elif 'aws-access-key-id' in request.json and 'aws-secret-access-key' in request.json:
+            aws_access_key_id = request.json.get('aws-access-key-id')
+            aws_secret_access_key = request.json.get('aws-secret-access-key')
         else:
             abort(400)
 
@@ -191,7 +192,8 @@ def analyze_original_circuit():
     impl_url = request.json.get('impl-url', "")
     input_params = request.json.get('input-params', "")
     bearer_token = request.json.get("bearer-token", "")
-    input_params = parameters.ParameterDictionary(input_params)
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
 
     if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
@@ -283,7 +285,8 @@ def execute_circuit():
     noise_model = request.json.get("noise-model")
     only_measurement_errors = request.json.get("only-measurement-errors")
     optimization_level = request.json.get('transpilation-optimization-level', 3)
-    input_params = parameters.ParameterDictionary(input_params)
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
 
     token = ''
     aws_access_key_id = ''
@@ -297,12 +300,12 @@ def execute_circuit():
         else:
             abort(400)
     elif provider == 'aws':
-        if 'aws_access_key_id' in input_params and 'aws_secret_access_key' in input_params:
-            aws_access_key_id = input_params['aws_access_key_id']
+        if 'aws-access-key-id' in input_params and 'aws-secret-access-key' in input_params:
+            aws_access_key_id = input_params['aws-access-key-id']
             aws_secret_access_key = input_params['aws_secret_access_key']
-        elif 'aws_access_key_id' in request.json and 'aws_secret_access_key' in request.json:
-            aws_access_key_id = request.json.get('aws_access_key_id')
-            aws_secret_access_key = request.json.get('aws_secret_access_key')
+        elif 'aws-access-key-id' in request.json and 'aws-secret-access-key' in request.json:
+            aws_access_key_id = request.json.get('aws-access-key-id')
+            aws_secret_access_key = request.json.get('aws-secret-access-key')
         else:
             abort(400)
 
