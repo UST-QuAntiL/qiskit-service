@@ -18,7 +18,8 @@
 # ******************************************************************************
 from qiskit.providers.ibmq import IBMQAccountError
 
-from app import app, benchmarking, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, analysis
+from app import app, benchmarking, aws_handler, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, \
+    analysis
 from app.benchmark_model import Benchmark
 from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
 from app.result_model import Result
@@ -37,29 +38,32 @@ def transpile_circuit():
     if not request.json or not 'qpu-name' in request.json:
         abort(400)
 
+    # Default value is ibmq for services that do not support multiple providers and expect the IBMQ provider
+    provider = request.json.get('provider', 'ibmq')
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     input_params = request.json.get('input-params', "")
     impl_url = request.json.get('impl-url', "")
     bearer_token = request.json.get("bearer-token", "")
-    input_params = parameters.ParameterDictionary(input_params)
-    if 'token' in input_params:
-        token = input_params['token']
-    elif 'token' in request.json:
-        token = request.json.get('token')
-    else:
-        abort(400)
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
 
-
-    credentials = {}
-    if 'url' in input_params:
-        credentials['url'] = input_params['url']
-    if 'hub' in input_params:
-        credentials['hub'] = input_params['hub']
-    if 'group' in input_params:
-        credentials['group'] = input_params['group']
-    if 'project' in input_params:
-        credentials['project'] = input_params['project']
+    if provider == 'ibmq':
+        if 'token' in input_params:
+            token = input_params['token']
+        elif 'token' in request.json:
+            token = request.json.get('token')
+        else:
+            abort(400)
+    elif provider == 'aws':
+        if 'aws-access-key-id' in input_params and 'aws-secret-access-key' in input_params:
+            aws_access_key_id = input_params['aws-access-key-id']
+            aws_secret_access_key = input_params['aws_secret_access_key']
+        elif 'aws-access-key-id' in request.json and 'aws-secret-access-key' in request.json:
+            aws_access_key_id = request.json.get('aws-access-key-id')
+            aws_secret_access_key = request.json.get('aws-secret-access-key')
+        else:
+            abort(400)
 
     if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
@@ -91,7 +95,7 @@ def transpile_circuit():
         abort(400)
 
     try:
-        print("circuit", circuit)
+        print(f"Circuit:\n{circuit}")
         non_transpiled_depth_old = 0
         non_transpiled_depth = circuit.depth()
         while non_transpiled_depth_old < non_transpiled_depth:
@@ -103,28 +107,45 @@ def transpile_circuit():
         non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
         non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
         non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
-                                       non_transpiled_number_of_multi_qubit_gates - \
-                                       non_transpiled_number_of_measurement_operations
-        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit.copy())
+                                                      non_transpiled_number_of_multi_qubit_gates - \
+                                                      non_transpiled_number_of_measurement_operations
+        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
+            circuit.copy())
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
             app.logger.warn(f"{short_impl_name} not found.")
             abort(404)
     except Exception as e:
-
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
         return jsonify({'error': str(e)}), 200
 
-    backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
+    backend = None
+    credentials = {}
+    if provider == 'ibmq':
+        if 'url' in input_params:
+            credentials['url'] = input_params['url']
+        if 'hub' in input_params:
+            credentials['hub'] = input_params['hub']
+        if 'group' in input_params:
+            credentials['group'] = input_params['group']
+        if 'project' in input_params:
+            credentials['project'] = input_params['project']
+        backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
+    elif provider == 'aws':
+        if 'region' in input_params:
+            credentials['region'] = input_params['region']
+        backend = aws_handler.get_qpu(access_key=aws_access_key_id, secret_access_key=aws_secret_access_key,
+                                      qpu_name=qpu_name, **credentials)
     if not backend:
-        # ibmq_handler.delete_token()
         app.logger.warn(f"{qpu_name} not found.")
         abort(404)
 
     try:
-        transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
-        print("Transpiled Circuit")
-        print(transpiled_circuit)
+        if provider == 'aws':
+            transpiled_circuit = transpile(circuit, backend=backend)
+        else:
+            transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
+        print(f"Transpiled Circuit:\n{transpiled_circuit}")
         width = circuit_analysis.get_width_of_circuit(transpiled_circuit)
         depth = transpiled_circuit.depth()
         total_number_of_operations = transpiled_circuit.size()
@@ -133,8 +154,6 @@ def transpile_circuit():
         number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - \
                                        number_of_measurement_operations
         multi_qubit_gate_depth, transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
-        print("After all")
-        print(transpiled_circuit)
 
     except TranspilerError:
         app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
@@ -166,7 +185,6 @@ def transpile_circuit():
 
 @app.route('/qiskit-service/api/v1.0/analyze-original-circuit', methods=['POST'])
 def analyze_original_circuit():
-
     if not request.json:
         abort(400)
 
@@ -174,7 +192,8 @@ def analyze_original_circuit():
     impl_url = request.json.get('impl-url', "")
     input_params = request.json.get('input-params', "")
     bearer_token = request.json.get("bearer-token", "")
-    input_params = parameters.ParameterDictionary(input_params)
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
 
     if impl_url is not None and impl_url != "":
         impl_url = request.json['impl-url']
@@ -216,9 +235,10 @@ def analyze_original_circuit():
         non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
         non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
         non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
-                                       non_transpiled_number_of_multi_qubit_gates - \
-                                       non_transpiled_number_of_measurement_operations
-        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(circuit)
+                                                      non_transpiled_number_of_multi_qubit_gates - \
+                                                      non_transpiled_number_of_measurement_operations
+        non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
+            circuit)
         print(circuit)
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
@@ -241,6 +261,10 @@ def execute_circuit():
     """Put execution jobs in queue. Return location of the later results."""
     if not request.json or not 'qpu-name' in request.json:
         abort(400)
+
+    # Default value is ibmq for services that do not support multiple providers and expect the IBMQ provider
+    provider = request.json.get('provider', 'ibmq')
+
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
     impl_url = request.json.get('impl-url')
@@ -261,30 +285,52 @@ def execute_circuit():
     noise_model = request.json.get("noise-model")
     only_measurement_errors = request.json.get("only-measurement-errors")
     optimization_level = request.json.get('transpilation-optimization-level', 3)
-    input_params = parameters.ParameterDictionary(input_params)
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
+
+    token = ''
+    aws_access_key_id = ''
+    aws_secret_access_key = ''
+
+    if provider == 'ibmq':
+        if 'token' in input_params:
+            token = input_params['token']
+        elif 'token' in request.json:
+            token = request.json.get('token')
+        else:
+            abort(400)
+    elif provider == 'aws':
+        if 'aws-access-key-id' in input_params and 'aws-secret-access-key' in input_params:
+            aws_access_key_id = input_params['aws-access-key-id']
+            aws_secret_access_key = input_params['aws_secret_access_key']
+        elif 'aws-access-key-id' in request.json and 'aws-secret-access-key' in request.json:
+            aws_access_key_id = request.json.get('aws-access-key-id')
+            aws_secret_access_key = request.json.get('aws-secret-access-key')
+        else:
+            abort(400)
 
     # Check parameters required for using premium accounts, de.imbq and reservations
     credentials = {}
-    if 'url' in input_params:
-        credentials['url'] = input_params['url']
-    if 'hub' in input_params:
-        credentials['hub'] = input_params['hub']
-    if 'group' in input_params:
-        credentials['group'] = input_params['group']
-    if 'project' in input_params:
-        credentials['project'] = input_params['project']
+    if provider == 'ibmq':
+        if 'url' in input_params:
+            credentials['url'] = input_params['url']
+        if 'hub' in input_params:
+            credentials['hub'] = input_params['hub']
+        if 'group' in input_params:
+            credentials['group'] = input_params['group']
+        if 'project' in input_params:
+            credentials['project'] = input_params['project']
+    elif provider == 'aws':
+        if 'region' in input_params:
+            credentials['region'] = input_params['region']
 
     shots = request.json.get('shots', 1024)
-    if 'token' in input_params:
-        token = input_params['token']
-    elif 'token' in request.json:
-        token = request.json.get('token')
-    else:
-        abort(400)
 
-    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
+    job = app.execute_queue.enqueue('app.tasks.execute', provider=provider, impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, input_params=input_params, noise_model=noise_model,
+                                    token_ibmq=token, access_key_aws=aws_access_key_id,
+                                    secret_access_key_aws=aws_secret_access_key, input_params=input_params,
+                                    noise_model=noise_model,
                                     only_measurement_errors=only_measurement_errors,
                                     optimization_level=optimization_level, shots=shots, bearer_token=bearer_token,
                                     qasm_string=qasm_string, **credentials)
@@ -452,6 +498,11 @@ def get_providers():
                     "id": str(generate_deterministic_uuid("ibmq", "provider")),
                     "name": "ibmq",
                     "offeringURL": "https://quantum-computing.ibm.com/",
+                },
+                {
+                    "id": str(generate_deterministic_uuid("aws", "provider")),
+                    "name": "aws",
+                    "offeringURL": "https://aws.amazon.com/braket/",
                 }
             ]
         }
