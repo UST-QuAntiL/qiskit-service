@@ -58,7 +58,7 @@ def transpile_circuit():
     elif provider == 'aws':
         if 'aws-access-key-id' in input_params and 'aws-secret-access-key' in input_params:
             aws_access_key_id = input_params['aws-access-key-id']
-            aws_secret_access_key = input_params['aws_secret_access_key']
+            aws_secret_access_key = input_params['aws-secret-access-key']
         elif 'aws-access-key-id' in request.json and 'aws-secret-access-key' in request.json:
             aws_access_key_id = request.json.get('aws-access-key-id')
             aws_secret_access_key = request.json.get('aws-secret-access-key')
@@ -302,7 +302,7 @@ def execute_circuit():
     elif provider == 'aws':
         if 'aws-access-key-id' in input_params and 'aws-secret-access-key' in input_params:
             aws_access_key_id = input_params['aws-access-key-id']
-            aws_secret_access_key = input_params['aws_secret_access_key']
+            aws_secret_access_key = input_params['aws-secret-access-key']
         elif 'aws-access-key-id' in request.json and 'aws-secret-access-key' in request.json:
             aws_access_key_id = request.json.get('aws-access-key-id')
             aws_secret_access_key = request.json.get('aws-secret-access-key')
