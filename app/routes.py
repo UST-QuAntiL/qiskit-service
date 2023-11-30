@@ -19,7 +19,7 @@
 from qiskit.providers.ibmq import IBMQAccountError
 
 from app import app, benchmarking, aws_handler, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, \
-    analysis
+    analysis, ionq_handler
 from app.benchmark_model import Benchmark
 from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
 from app.result_model import Result
@@ -48,7 +48,7 @@ def transpile_circuit():
     if input_params:
         input_params = parameters.ParameterDictionary(input_params)
 
-    if provider == 'ibmq':
+    if provider == 'ibmq' or provider == 'ionq':
         if 'token' in input_params:
             token = input_params['token']
         elif 'token' in request.json:
@@ -131,6 +131,8 @@ def transpile_circuit():
         if 'project' in input_params:
             credentials['project'] = input_params['project']
         backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
+    elif provider == 'ionq':
+        backend = ionq_handler.get_qpu(token, qpu_name)
     elif provider == 'aws':
         if 'region' in input_params:
             credentials['region'] = input_params['region']
@@ -292,7 +294,7 @@ def execute_circuit():
     aws_access_key_id = ''
     aws_secret_access_key = ''
 
-    if provider == 'ibmq':
+    if provider == 'ibmq' or provider == 'ionq':
         if 'token' in input_params:
             token = input_params['token']
         elif 'token' in request.json:
@@ -328,7 +330,7 @@ def execute_circuit():
 
     job = app.execute_queue.enqueue('app.tasks.execute', provider=provider, impl_url=impl_url, impl_data=impl_data,
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token_ibmq=token, access_key_aws=aws_access_key_id,
+                                    token=token, access_key_aws=aws_access_key_id,
                                     secret_access_key_aws=aws_secret_access_key, input_params=input_params,
                                     noise_model=noise_model,
                                     only_measurement_errors=only_measurement_errors,

@@ -25,6 +25,10 @@ The qiskit-service provides a Swagger UI, specifying the request schemas and sho
 
 _Note_: To run the setup as a developer, see [here](./docs/dev/run-as-dev.md).
 
+## Using IonQ QPUs
+To execute quantum circuits on IonQ QPUs an IonQ account with the respective access rights is required.
+The IonQ API token has to be provided in the request body to transpile or execute quantum circuits on IonQ QPUs.
+
 ## Using AWS Braket QPUs
 To execute quantum circuits on AWS Braket QPUs via the qiskit service, an AWS IAM account with the Braket Group membership is required.
 The AWS access key and the AWS secret access key have to be provided in the request json body to transpile or execute quantum circuits for/on AWS Braket QPUs.

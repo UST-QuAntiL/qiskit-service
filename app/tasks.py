@@ -18,7 +18,7 @@
 # ******************************************************************************
 import datetime
 
-from app import implementation_handler, aws_handler, ibmq_handler, db, app
+from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq_handler
 from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
 from qiskit.utils.measurement_error_mitigation import get_measured_qubits
@@ -33,7 +33,7 @@ import json
 import base64
 
 
-def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token_ibmq, access_key_aws,
+def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, access_key_aws,
             secret_access_key_aws, qpu_name,
             optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
@@ -41,7 +41,9 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
     job = get_current_job()
 
     if provider == 'ibmq':
-        backend = ibmq_handler.get_qpu(token_ibmq, qpu_name, **kwargs)
+        backend = ibmq_handler.get_qpu(token, qpu_name, **kwargs)
+    elif provider == 'ionq':
+        backend = ionq_handler.get_qpu(token, qpu_name)
     elif provider == 'aws':
         backend = aws_handler.get_qpu(access_key=access_key_aws, secret_access_key=secret_access_key_aws,
                                       qpu_name=qpu_name,
@@ -78,8 +80,8 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
             db.session.commit()
         app.logger.info('Start transpiling...')
 
-        if noise_model:
-            noisy_qpu = ibmq_handler.get_qpu(token_ibmq, noise_model, **kwargs)
+        if noise_model and provider == 'ibmq':
+            noisy_qpu = ibmq_handler.get_qpu(token, noise_model, **kwargs)
             noise_model = NoiseModel.from_backend(noisy_qpu)
             properties = noisy_qpu.properties()
             configuration = noisy_qpu.configuration()
@@ -115,6 +117,8 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
     if provider == 'aws' and not noise_model:
         # Note: AWS cannot handle such a noise model
         job_result = aws_handler.execute_job(transpiled_circuits, shots, backend)
+    elif provider == 'ionq' and not noise_model:
+        job_result = ionq_handler.execute_job(transpiled_circuits, shots, backend)
     else:
         # If we need a noise model, we have to use IBM Q
         job_result = ibmq_handler.execute_job(transpiled_circuits, shots, backend, noise_model)

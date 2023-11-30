@@ -44,6 +44,7 @@ qiskit-dynamics==0.4.0
 qiskit-experiments==0.5.2
 qiskit-ibm-experiment==0.3.3
 qiskit-ibmq-provider==0.20.2
+qiskit-ionq==0.4.4
 qiskit-terra==0.24.0
 qiskit_braket_provider==0.0.4
 redis==4.3.1
