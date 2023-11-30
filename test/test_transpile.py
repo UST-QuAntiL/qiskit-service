@@ -229,7 +229,7 @@ class TranspileTestCase(unittest.TestCase):
             self.assertIsNotNone(json_data.get('transpiled-qasm'))
     """
 
-    def test_transpile_circuit_nairobi_file_qasm(self):
+    def test_transpile_circuit_sim_file_qasm(self):
 
         # prepare the request
         file_path = (os.path.dirname(__file__))+'/data/pattern0-3_1_2nCliffs10seed2.qasm'
@@ -238,7 +238,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'OpenQASM',
-            'qpu-name': "ibm_nairobi",
+            'qpu-name': "ibmq_qasm_simulator",
             'input-params': {},
             'token': os.environ["QISKIT_TOKEN"]
         }
