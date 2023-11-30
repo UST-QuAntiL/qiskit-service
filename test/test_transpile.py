@@ -122,7 +122,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_circuit_perth_file(self):
+    def test_transpile_circuit_sim_file(self):
 
         # prepare the request
         file_path = (os.path.dirname(__file__))+'/data/pattern0-3_1_2nCliffs10seed2.qasm'
@@ -131,7 +131,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'openqasm',
-            'qpu-name': "ibm_perth",
+            'qpu-name': "ibmq_qasm_simulator",
             'input-params': {},
             'token': os.environ.get("QISKIT_TOKEN", "")
         }
@@ -159,13 +159,13 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_perth_url_qasm(self):
+    def test_transpile_shor_sim_url_qasm(self):
 
         # prepare the request
         request = {
             'impl-url': 'https://quantum-circuit.com/api/get/circuit/KzG7MxH6hpBpM9pCt?format=qasm',
             'impl-language': 'OpenQASM',
-            'qpu-name': "ibm_perth",
+            'qpu-name': "ibmq_qasm_simulator",
             'input-params': {},
             'token': os.environ["QISKIT_TOKEN"]
         }
@@ -384,6 +384,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIsNotNone("result", json_data)
         print(r.headers.get("Location"))
 
+    @unittest.skip("Perth QPU currently not available")
     def test_noisy_simulator(self):
         token = os.environ["QISKIT_TOKEN"]
         request = {
@@ -398,6 +399,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 202)
         print(response.get_json())
 
+    @unittest.skip("Perth QPU currently not available")
     def test_noisy_de_simulator(self):
         token = os.environ["QISKIT_TOKEN"]
         request = {
