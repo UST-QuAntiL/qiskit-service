@@ -95,7 +95,6 @@ def transpile_circuit():
         abort(400)
 
     try:
-        print(f"Circuit:\n{circuit}")
         non_transpiled_depth_old = 0
         non_transpiled_depth = circuit.depth()
         while non_transpiled_depth_old < non_transpiled_depth:
@@ -147,7 +146,6 @@ def transpile_circuit():
             transpiled_circuit = transpile(circuit, backend=backend)
         else:
             transpiled_circuit = transpile(circuit, backend=backend, optimization_level=3)
-        print(f"Transpiled Circuit:\n{transpiled_circuit}")
         width = circuit_analysis.get_width_of_circuit(transpiled_circuit)
         depth = transpiled_circuit.depth()
         total_number_of_operations = transpiled_circuit.size()
@@ -241,7 +239,6 @@ def analyze_original_circuit():
                                                       non_transpiled_number_of_measurement_operations
         non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
             circuit)
-        print(circuit)
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
         if not circuit:
             app.logger.warn(f"{short_impl_name} not found.")

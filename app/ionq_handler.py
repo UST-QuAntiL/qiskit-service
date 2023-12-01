@@ -23,6 +23,10 @@ from qiskit_ionq import IonQProvider
 
 def get_qpu(token, qpu_name):
     provider = IonQProvider(token)
+    if "simulator" not in qpu_name:
+        qpu_name = qpu_name.replace(" ", "-").lower()
+        ionq_signature = "ionq_qpu."
+        qpu_name = ionq_signature + qpu_name
     return provider.get_backend(qpu_name)
 
 
