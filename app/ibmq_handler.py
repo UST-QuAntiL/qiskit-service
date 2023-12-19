@@ -46,7 +46,7 @@ def execute_job(transpiled_circuits, shots, backend, noise_model):
     """Generate qObject from transpiled circuit and execute it. Return result."""
 
     try:
-        job = backend.run(assemble(transpiled_circuits), shots=shots, noise_model=noise_model)
+        job = backend.run(assemble(transpiled_circuits, shots=shots), noise_model=noise_model)
 
         job_status = job.status()
         while job_status not in JOB_FINAL_STATES:

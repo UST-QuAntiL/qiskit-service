@@ -47,8 +47,8 @@ qiskit-ibmq-provider==0.20.2
 qiskit-ionq==0.4.4
 qiskit-terra==0.24.0
 qiskit_braket_provider==0.0.4
-redis==4.3.1
-requests==2.27.1
+redis==5.0.1
+requests==2.31.0
 requests-ntlm==1.1.0
 retworkx==0.12.1
 rq==1.10.1
