@@ -23,6 +23,10 @@ Now the qiskit-service is available on http://localhost:5013/.
 The qiskit-service provides a Swagger UI, specifying the request schemas and showcasing exemplary requests for all API endpoints.
 * http://localhost:5013/api/swagger-ui
 
+The OpenAPI specifications are also statically available:
+[OpenAPI JSON](./docs/api/openapi.json)  
+[OpenAPI YAML](./docs/api/openapi.yaml)
+
 _Note_: To run the setup as a developer, see [here](./docs/dev/run-as-dev.md).
 
 ## Using IonQ QPUs

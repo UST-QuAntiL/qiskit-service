@@ -1,0 +1,800 @@
+{
+  "openapi" : "3.0.2",
+  "info" : {
+    "title" : "qiskit-service",
+    "description" : "This is the API Specification of the qiskit-service (https://github.com/UST-QuAntiL/qiskit-service).",
+    "version" : "0.1"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "tags" : [ {
+    "name" : "Transpile",
+    "description" : "Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get analyzed properties of the transpiled circuit and the transpiled OpenQASM circuit itself."
+  }, {
+    "name" : "Execute",
+    "description" : "Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result."
+  }, {
+    "name" : "Calibrate Matrix Calculation",
+    "description" : "Send QPU information, optional shots, and your IBM Quantum Experience token to the API to calculate the calibration matrix for the given QPU."
+  }, {
+    "name" : "Benchmark Request",
+    "description" : "Send QPU information, the width and depth of the circuit, the number of circuits you want to create, the number of shots and your IBM Quantum Experience token to the API to get the result on the IBM Quantum Simulator, and the stated QPU. The response also contains a link to the summary of the benchmark."
+  }, {
+    "name" : "Analysis Request",
+    "description" : "Request an analysis of all benchmarks in the database that successfully returned a result. For those benchmarks, the histograms of the simulator's and the quantum computer's result are compared using the four metrics: Chi-Square-Distance, Correlation, Percentage Error and Histogram Intersection."
+  }, {
+    "name" : "Analysis of Original Circuit",
+    "description" : "Request an analysis of the original circuit."
+  }, {
+    "name" : "Wd Request",
+    "description" : "Request the wd-value of a specific Quantum Computer based on the clifford gate circuit data in your database"
+  }, {
+    "name" : "Get up-to-date data of QPUs",
+    "description" : "Get provider Information"
+  }, {
+    "name" : "Results",
+    "description" : ""
+  } ],
+  "paths" : {
+    "/qiskit-service/api/v1.0/transpile" : {
+      "post" : {
+        "tags" : [ "Transpile" ],
+        "description" : "*Note*: \"token\" should either be in \"input-params\" or extra. *Note*: \"url\", \"hub\", \"group\", \"project\" are optional such that otherwise the standard values are used.",
+        "requestBody" : {
+          "description" : "                Transpile via URL:\n                    \"impl-url\": \"URL-OF-IMPLEMENTATION\" \n                Transpile via data:\n                    \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"\n                Transpile via OpenQASM-String\n                    \"qasm-string\": \"OpenQASM String\"\n                the \"input-params\"are of the form:\n                    \"input-params\": {\n                        \"PARAM-NAME-1\": {\n                            \"rawValue\": \"YOUR-VALUE-1\",\n                            \"type\": \"Integer\"\n                        },\n                        \"PARAM-NAME-2\": {\n                            \"rawValue\": \"YOUR-VALUE-2\",\n                            \"type\": \"String\"\n                        },\n                        ...\n                        \"token\": {\n                            \"rawValue\": \"YOUR-IBMQ-TOKEN\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"url\": {\n                            \"rawValue\": \"YOUR-IBMQ-AUTHENTICATION-URL\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"hub\": {\n                            \"rawValue\": \"YOUR-IBMQ-HUB\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"group\": {\n                            \"rawValue\": \"YOUR-IBMQ-GROUP\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"project\": {\n                            \"rawValue\": \"YOUR-IBMQ-PROJECT\",\n                            \"type\": \"Unknown\"\n                        }",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TranspileRequest"
+              },
+              "example" : {
+                "impl-url" : "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py",
+                "qpu-name" : "ibmq_qasm_simulator",
+                "impl-language" : "qiskit",
+                "token" : "YOUR-IBMQ-TOKEN",
+                "input-params" : { }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TranspileResponse"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/execute" : {
+      "post" : {
+        "tags" : [ "Execute" ],
+        "description" : "*Note*: \"token\" should either be in \"input-params\" or extra. Both variants are combined here for illustration purposes. *Note*: \"url\", \"hub\", \"group\", \"project\" are optional such that otherwise the standard values are used.",
+        "requestBody" : {
+          "description" : "                Execution via URL:\n                    \"impl-url\": \"URL-OF-IMPLEMENTATION\" \n                Execution via data:\n                    \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"\n                Execution via OpenQASM-String:\n                    \"qasm-string\": \"OpenQASM String\"\n                Execution via transpiled OpenQASM String:\n                    \"transpiled-qasm\":\"TRANSPILED-QASM-STRING\" \n                for Batch Execution of multiple circuits use:\n                    \"impl-url\": [\"URL-OF-IMPLEMENTATION-1\", \"URL-OF-IMPLEMENTATION-2\"]\n                the \"input-params\"are of the form:\n                    \"input-params\": {\n                        \"PARAM-NAME-1\": {\n                            \"rawValue\": \"YOUR-VALUE-1\",\n                            \"type\": \"Integer\"\n                        },\n                        \"PARAM-NAME-2\": {\n                            \"rawValue\": \"YOUR-VALUE-2\",\n                            \"type\": \"String\"\n                        },\n                        ...\n                        \"token\": {\n                            \"rawValue\": \"YOUR-IBMQ-TOKEN\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"url\": {\n                            \"rawValue\": \"YOUR-IBMQ-AUTHENTICATION-URL\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"hub\": {\n                            \"rawValue\": \"YOUR-IBMQ-HUB\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"group\": {\n                            \"rawValue\": \"YOUR-IBMQ-GROUP\",\n                            \"type\": \"Unknown\"\n                        },\n                        \"project\": {\n                            \"rawValue\": \"YOUR-IBMQ-PROJECT\",\n                            \"type\": \"Unknown\"\n                        }",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExecuteRequest"
+              },
+              "example" : {
+                "impl-url" : "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py",
+                "qpu-name" : "ibmq_qasm_simulator",
+                "impl-language" : "qiskit",
+                "token" : "YOUR-IBMQ-TOKEN",
+                "input-params" : { }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Returns a content location for the result. Access it via GET",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecuteResponse"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/calculate-calibration-matrix" : {
+      "post" : {
+        "tags" : [ "Calibrate Matrix Calculation" ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CalcCalibrationMatrixRequest"
+              },
+              "example" : {
+                "qpu-name" : "ibmq_qasm_simulator",
+                "shots" : 1024,
+                "token" : "YOUR-IBMQ-TOKEN"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CalcCalibrationMatrixResponse"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/randomize" : {
+      "post" : {
+        "tags" : [ "Benchmark Request" ],
+        "description" : "Please make sure that \"number-of-qubits\", \"number-of-circuits\" and \"min-depth-of-circuit\" are greater than 0. Also, \"max-depth-of-cicuit\" has to be greater or equal to \"min-depth-of-circuit\"",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BenchmarkRequest"
+              },
+              "example" : {
+                "qpu-name" : "ibmq_qasm_simulator",
+                "number-of-qubits" : 3,
+                "min-depth-of-circuit" : 1,
+                "max-depth-of-circuit" : 2,
+                "number-of-circuits" : 3,
+                "shots" : 1024,
+                "token" : "YOUR-IBMQ-TOKEN",
+                "clifford" : false
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BenchmarkResponse"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/benchmarks/{benchmark_id}" : {
+      "get" : {
+        "tags" : [ "Benchmark Request" ],
+        "parameters" : [ {
+          "name" : "benchmark_id",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultsResponse"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/analysis" : {
+      "get" : {
+        "tags" : [ "Analysis Request" ],
+        "description" : "- Chi-Square-Distance: Large values indicate a strong deviation between the two histogram, however it is not normalized and difficult to interpret. \n - Correlation: Normalized between -1 and 1, where values close to 1 indicate a strong correlation between the histograms. Since the histograms often have a similar shape even though the counts are erroneous, the correlation often suggests success even for bad results. \n- Percentage Error: Indicates the error in relation to the ideal value for each count separately. This metric does not provide a general view on the quality of the result.\n- Histogram Intersection: Returns a value that indicates how much of the histograms overlap.It is normalized between 0 and 1, where 1 would mean that the two histograms are the same.Therefore, it is a useful metric to judge the quality of the quantum computer's result.",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/analysis/{qpu_name}" : {
+      "get" : {
+        "tags" : [ "Analysis Request" ],
+        "description" : "- Chi-Square-Distance: Large values indicate a strong deviation between the two histogram, however it is not normalized and difficult to interpret. \n - Correlation: Normalized between -1 and 1, where values close to 1 indicate a strong correlation between the histograms. Since the histograms often have a similar shape even though the counts are erroneous, the correlation often suggests success even for bad results. \n- Percentage Error: Indicates the error in relation to the ideal value for each count separately. This metric does not provide a general view on the quality of the result.\n- Histogram Intersection: Returns a value that indicates how much of the histograms overlap.It is normalized between 0 and 1, where 1 would mean that the two histograms are the same.Therefore, it is a useful metric to judge the quality of the quantum computer's result.",
+        "parameters" : [ {
+          "name" : "qpu_name",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/analyze-original-circuit" : {
+      "post" : {
+        "tags" : [ "Analysis of Original Circuit" ],
+        "requestBody" : {
+          "description" : "            \"input-params\" should be of the form:\n            \"input-params\":{\n                \"PARAM-NAME-1\": {\n                    \"rawValue\": \"YOUR-VALUE-1\",\n                    \"type\": \"Integer\"\n                },\n                \"PARAM-NAME-2\": {\n                    \"rawValue\": \"YOUR-VALUE-2\",\n                    \"type\": \"String\"\n            }",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnalysisOriginalCircuitRequest"
+              },
+              "example" : {
+                "impl-url" : "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py",
+                "impl-language" : "qiskit",
+                "input-params" : { }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalysisOriginalCircuitResponse"
+                }
+              }
+            }
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/calc-wd/{qpu_name}" : {
+      "get" : {
+        "tags" : [ "Wd Request" ],
+        "description" : "There needs to be at least 10 data points for each number of qubits and depth to get a meaningful result.",
+        "parameters" : [ {
+          "name" : "qpu_name",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/providers" : {
+      "get" : {
+        "tags" : [ "Get up-to-date data of QPUs" ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/providers/f8f0c200-875d-0ff8-0352-1be4666c5829/qpus" : {
+      "get" : {
+        "tags" : [ "Get up-to-date data of QPUs" ],
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "header",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/qiskit-service/api/v1.0/results/{id}" : {
+      "get" : {
+        "tags" : [ "Results" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultsResponse"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Error" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "description" : "Error message"
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "Error name"
+          },
+          "code" : {
+            "type" : "integer",
+            "description" : "Error code"
+          },
+          "errors" : {
+            "type" : "object",
+            "description" : "Errors"
+          }
+        }
+      },
+      "PaginationMetadata" : {
+        "type" : "object",
+        "properties" : {
+          "total" : {
+            "type" : "integer"
+          },
+          "total_pages" : {
+            "type" : "integer"
+          },
+          "first_page" : {
+            "type" : "integer"
+          },
+          "last_page" : {
+            "type" : "integer"
+          },
+          "page" : {
+            "type" : "integer"
+          },
+          "previous_page" : {
+            "type" : "integer"
+          },
+          "next_page" : {
+            "type" : "integer"
+          }
+        }
+      },
+      "TranspileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "qpu_name" : {
+            "type" : "string"
+          },
+          "input_params" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "impl_language" : {
+            "type" : "string"
+          },
+          "impl_url" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TranspileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "number_of_single_qubit_gates" : {
+            "type" : "integer"
+          },
+          "transpiled_qasm" : {
+            "type" : "string"
+          },
+          "depth" : {
+            "type" : "integer"
+          },
+          "total_number_of_operations" : {
+            "type" : "integer"
+          },
+          "number_of_multi_qubit_gates" : {
+            "type" : "integer"
+          },
+          "width" : {
+            "type" : "integer"
+          },
+          "multi_qubit_gate_depth" : {
+            "type" : "integer"
+          },
+          "number_of_measurement_operations" : {
+            "type" : "integer"
+          }
+        }
+      },
+      "ExecuteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "qpu_name" : {
+            "type" : "string"
+          },
+          "only_measurement_errors" : {
+            "type" : "boolean"
+          },
+          "input_params" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "impl_language" : {
+            "type" : "string"
+          },
+          "impl_url" : {
+            "type" : "string"
+          },
+          "noise_model" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ExecuteResponse" : {
+        "type" : "object",
+        "properties" : {
+          "location" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CalcCalibrationMatrixRequest" : {
+        "type" : "object",
+        "properties" : {
+          "qpu_name" : {
+            "type" : "string"
+          },
+          "shots" : {
+            "type" : "integer"
+          },
+          "token" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CalcCalibrationMatrixResponse" : {
+        "type" : "object",
+        "properties" : {
+          "location" : {
+            "type" : "string"
+          }
+        }
+      },
+      "BenchmarkRequest" : {
+        "type" : "object",
+        "properties" : {
+          "qpu_name" : {
+            "type" : "string"
+          },
+          "number_of_circuits" : {
+            "type" : "integer"
+          },
+          "min_depth" : {
+            "type" : "integer"
+          },
+          "number_of_qubits" : {
+            "type" : "integer"
+          },
+          "max_depth" : {
+            "type" : "integer"
+          },
+          "clifford" : {
+            "type" : "boolean"
+          },
+          "token" : {
+            "type" : "string"
+          },
+          "shots" : {
+            "type" : "integer"
+          }
+        }
+      },
+      "BenchmarkResponse" : {
+        "type" : "object",
+        "properties" : {
+          "list" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ResultsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "AnalysisOriginalCircuitRequest" : {
+        "type" : "object",
+        "properties" : {
+          "impl_language" : {
+            "type" : "string"
+          },
+          "input_params" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "impl_url" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AnalysisOriginalCircuitResponse" : {
+        "type" : "object",
+        "properties" : {
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    },
+    "responses" : {
+      "UNPROCESSABLE_ENTITY" : {
+        "description" : "Unprocessable Entity",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "DEFAULT_ERROR" : {
+        "description" : "Default error response",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
