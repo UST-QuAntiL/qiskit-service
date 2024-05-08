@@ -116,5 +116,39 @@ class ResultsResponseSchema(ma.Schema):
     result = ma.fields.List(ma.fields.String())
 
 
+class AnalysisOriginalCircuitResponse:
+    def __init__(self, original_depth, original_multi_qubit_gate_depth, original_number_of_measurement_operations,
+                 original_number_of_multi_qubit_gates, original_number_of_single_qubit_gates,
+                 original_total_number_of_operations, original_width):
+        super().__init__()
+        self.original_depth = original_depth
+        self.original_multi_qubit_gate_depth = original_multi_qubit_gate_depth
+        self.original_number_of_measurement_operations = original_number_of_measurement_operations
+        self.original_number_of_multi_qubit_gates = original_number_of_multi_qubit_gates
+        self.original_number_of_single_qubit_gates = original_number_of_single_qubit_gates
+        self.original_total_number_of_operations = original_total_number_of_operations
+        self.original_width = original_width
+
+    def to_json(self):
+        json_generate_circuit_response = {"original-depth": self.original_depth,
+                                          "original-multi-qubit-gate-depth": self.original_multi_qubit_gate_depth,
+                                          "original-number-of-measurement-operations": self.original_number_of_measurement_operations,
+                                          "original-number-of-multi_qubit-gates": self.original_number_of_multi_qubit_gates,
+                                          "original-number-of-single-qubit-gates": self.original_number_of_single_qubit_gates,
+                                          "original-total-number-of-operations": self.original_total_number_of_operations,
+                                          "original-width": self.original_width, }
+        return json_generate_circuit_response
+
+
 class AnalysisOriginalCircuitResponseSchema(ma.Schema):
-    result = ma.fields.List(ma.fields.String())
+    original_depth = ma.fields.Int()
+    original_multi_qubit_gate_depth = ma.fields.Int()
+    original_number_of_measurement_operations = ma.fields.Int()
+    original_number_of_multi_qubit_gates = ma.fields.Int()
+    original_number_of_single_qubit_gates = ma.fields.Int()
+    original_total_number_of_operations = ma.fields.Int()
+    original_width = ma.fields.Int()
+
+    @property
+    def input(self):
+        raise NotImplementedError
