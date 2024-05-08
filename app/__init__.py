@@ -1,5 +1,5 @@
 # ******************************************************************************
-#  Copyright (c) 2020-2021 University of Stuttgart
+#  Copyright (c) 2024 University of Stuttgart
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -17,15 +17,15 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from flask import Flask
-from app.config import Config
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from redis import Redis
-import rq
-from app import Config
 import logging
 
+import rq
+from flask import Flask
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from redis import Redis
+
+from app.config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -38,11 +38,12 @@ from flask_smorest import Api
 
 app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
 app.execute_queue = rq.Queue('qiskit-service_execute', connection=app.redis, default_timeout=10000)
+app.implementation_queue = rq.Queue('qiskit-service_implementation_exe', connection=app.redis, default_timeout=10000)
 app.logger.setLevel(logging.INFO)
-
 
 api = Api(app)
 register_blueprints(api)
+
 
 @app.route("/")
 def heartbeat():

@@ -1,5 +1,5 @@
 # ******************************************************************************
-#  Copyright (c) 2020-2021 University of Stuttgart
+#  Copyright (c) 2024 University of Stuttgart
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -16,18 +16,76 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+
+import base64
+import json
+
+from flask import jsonify, abort, request
+from qiskit import transpile
 from qiskit.providers.ibmq import IBMQAccountError
+from qiskit.transpiler.exceptions import TranspilerError
 
 from app import app, benchmarking, aws_handler, ibmq_handler, implementation_handler, db, parameters, circuit_analysis, \
     analysis, ionq_handler
 from app.benchmark_model import Benchmark
+from app.generated_circuit_model import Generated_Circuit
 from app.qpu_metrics import generate_deterministic_uuid, get_all_qpus_and_metrics_as_json_str
 from app.result_model import Result
-from flask import jsonify, abort, request
-from qiskit import transpile
-from qiskit.transpiler.exceptions import TranspilerError
-import json
-import base64
+
+
+@app.route('/qiskit-service/api/v1.0/generate-circuit', methods=['POST'])
+def generate_circuit():
+    if not request.json:
+        abort(400)
+
+    impl_language = request.json.get('impl-language', '')
+    impl_url = request.json.get('impl-url', "")
+    input_params = request.json.get('input-params', "")
+    bearer_token = request.json.get("bearer-token", "")
+    if input_params:
+        input_params = parameters.ParameterDictionary(input_params)
+
+    if impl_url is not None and impl_url != "":
+        impl_url = request.json['impl-url']
+    elif 'impl-data' in request.json:
+        impl_data = base64.b64decode(request.json.get('impl-data').encode()).decode()
+    else:
+        abort(400)
+
+    job = app.implementation_queue.enqueue('app.tasks.generate', impl_url=impl_url, impl_data=impl_data,
+                                           impl_language=impl_language, input_params=input_params,
+                                           bearer_token=bearer_token)
+
+    result = Generated_Circuit(id=job.get_id())
+    db.session.add(result)
+    db.session.commit()
+
+    app.logger.info('Returning HTTP response to client...')
+    content_location = '/qiskit-service/api/v1.0/generated-circuits/' + result.id
+    response = jsonify({'Location': content_location})
+    response.status_code = 202
+    response.headers['Location'] = content_location
+    response.autocorrect_location_header = True
+    return response
+
+
+@app.route('/qiskit-service/api/v1.0/generated-circuits/<generated_circuit_id>', methods=['GET'])
+def get_generated_circuit(generated_circuit_id):
+    """Return result when it is available."""
+    generated_circuit = Generated_Circuit.query.get(generated_circuit_id)
+    if generated_circuit.complete:
+        input_params_dict = json.loads(generated_circuit.input_params)
+        return jsonify(
+            {'id': generated_circuit.id, 'complete': generated_circuit.complete, 'input_params': input_params_dict,
+             'generated-circuit': generated_circuit.generated_circuit,
+             'original-depth': generated_circuit.original_depth, 'original-width': generated_circuit.original_width,
+             'original-total-number-of-operations': generated_circuit.original_total_number_of_operations,
+             'original-number-of-multi-qubit-gates': generated_circuit.original_number_of_multi_qubit_gates,
+             'original-number-of-measurement-operations': generated_circuit.original_number_of_measurement_operations,
+             'original-number-of-single-qubit-gates': generated_circuit.original_number_of_single_qubit_gates,
+             'original-multi-qubit-gate-depth': generated_circuit.original_multi_qubit_gate_depth}), 200
+    else:
+        return jsonify({'id': generated_circuit.id, 'complete': generated_circuit.complete}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/transpile', methods=['POST'])
@@ -105,9 +163,7 @@ def transpile_circuit():
         non_transpiled_total_number_of_operations = circuit.size()
         non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
         non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
-        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
-                                                      non_transpiled_number_of_multi_qubit_gates - \
-                                                      non_transpiled_number_of_measurement_operations
+        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - non_transpiled_number_of_multi_qubit_gates - non_transpiled_number_of_measurement_operations
         non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
             circuit.copy())
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
@@ -151,8 +207,7 @@ def transpile_circuit():
         total_number_of_operations = transpiled_circuit.size()
         number_of_multi_qubit_gates = transpiled_circuit.num_nonlocal_gates()
         number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(transpiled_circuit)
-        number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - \
-                                       number_of_measurement_operations
+        number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates - number_of_measurement_operations
         multi_qubit_gate_depth, transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(transpiled_circuit)
 
     except TranspilerError:
@@ -166,16 +221,13 @@ def transpile_circuit():
                     f"number of single qubit gates={number_of_single_qubit_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}, "
                     f"number of measurement operations={number_of_measurement_operations}")
-    return jsonify({'original-depth': non_transpiled_depth,
-                    'original-width': non_transpiled_width,
+    return jsonify({'original-depth': non_transpiled_depth, 'original-width': non_transpiled_width,
                     'original-total-number-of-operations': non_transpiled_total_number_of_operations,
                     'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
                     'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
                     'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
-                    'original-multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth,
-                    'depth': depth,
-                    'multi-qubit-gate-depth': multi_qubit_gate_depth,
-                    'width': width,
+                    'original-multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth, 'depth': depth,
+                    'multi-qubit-gate-depth': multi_qubit_gate_depth, 'width': width,
                     'total-number-of-operations': total_number_of_operations,
                     'number-of-single-qubit-gates': number_of_single_qubit_gates,
                     'number-of-multi-qubit-gates': number_of_multi_qubit_gates,
@@ -234,9 +286,7 @@ def analyze_original_circuit():
         non_transpiled_total_number_of_operations = circuit.size()
         non_transpiled_number_of_multi_qubit_gates = circuit.num_nonlocal_gates()
         non_transpiled_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(circuit)
-        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - \
-                                                      non_transpiled_number_of_multi_qubit_gates - \
-                                                      non_transpiled_number_of_measurement_operations
+        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations - non_transpiled_number_of_multi_qubit_gates - non_transpiled_number_of_measurement_operations
         non_transpiled_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
             circuit)
         print(f"Non transpiled width {non_transpiled_width} & non transpiled depth {non_transpiled_depth}")
@@ -246,8 +296,7 @@ def analyze_original_circuit():
     except Exception as e:
         return jsonify({'error': str(e)}), 200
 
-    return jsonify({'original-depth': non_transpiled_depth,
-                    'original-width': non_transpiled_width,
+    return jsonify({'original-depth': non_transpiled_depth, 'original-width': non_transpiled_width,
                     'original-total-number-of-operations': non_transpiled_total_number_of_operations,
                     'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
                     'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations,
@@ -329,8 +378,7 @@ def execute_circuit():
                                     impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
                                     token=token, access_key_aws=aws_access_key_id,
                                     secret_access_key_aws=aws_secret_access_key, input_params=input_params,
-                                    noise_model=noise_model,
-                                    only_measurement_errors=only_measurement_errors,
+                                    noise_model=noise_model, only_measurement_errors=only_measurement_errors,
                                     optimization_level=optimization_level, shots=shots, bearer_token=bearer_token,
                                     qasm_string=qasm_string, **credentials)
 
@@ -408,8 +456,8 @@ def get_result(result_id):
     result = Result.query.get(result_id)
     if result.complete:
         result_dict = json.loads(result.result)
-        return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict,
-                        'backend': result.backend, 'shots': result.shots}), 200
+        return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict, 'backend': result.backend,
+                        'shots': result.shots}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
 
@@ -436,11 +484,9 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # both backends finished execution
-            return jsonify({'id': int(benchmark_id),
-                            'benchmarking-complete': True,
+            return jsonify({'id': int(benchmark_id), 'benchmarking-complete': True,
                             'histogram-intersection': analysis.calc_intersection(
-                                json.loads(benchmark_sim.counts).copy(),
-                                json.loads(benchmark_real.counts).copy(),
+                                json.loads(benchmark_sim.counts).copy(), json.loads(benchmark_real.counts).copy(),
                                 benchmark_real.shots),
                             'perc-error': analysis.calc_percentage_error(json.loads(benchmark_sim.counts),
                                                                          json.loads(benchmark_real.counts)),
@@ -458,8 +504,7 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # simulator finished execution, quantum computer not yet
-            return jsonify({'id': int(benchmark_id),
-                            'benchmarking-complete': False,
+            return jsonify({'id': int(benchmark_id), 'benchmarking-complete': False,
                             'benchmarking-results': [get_benchmark_body(benchmark_backend=benchmark_sim),
                                                      {'result-id': benchmark_real.id,
                                                       'complete': benchmark_real.complete}]}), 200
@@ -470,19 +515,14 @@ def get_benchmark(benchmark_id):
                 return json.dumps({'error': 'execution failed'})
 
             # quantum computer finished execution, simulator not yet
-            return jsonify({'id': int(benchmark_id),
-                            'benchmarking-complete': False,
-                            'benchmarking-results': [{'result-id': benchmark_sim.id,
-                                                      'complete': benchmark_sim.complete},
-                                                     get_benchmark_body(benchmark_backend=benchmark_real)]}), 200
+            return jsonify({'id': int(benchmark_id), 'benchmarking-complete': False, 'benchmarking-results': [
+                {'result-id': benchmark_sim.id, 'complete': benchmark_sim.complete},
+                get_benchmark_body(benchmark_backend=benchmark_real)]}), 200
         else:
             # both backends did not finish execution yet
-            return jsonify({'id': int(benchmark_id),
-                            'benchmarking-complete': False,
-                            'benchmarking-results': [{'result-id': benchmark_sim.id,
-                                                      'complete': benchmark_sim.complete},
-                                                     {'result-id': benchmark_real.id,
-                                                      'complete': benchmark_real.complete}]}), 200
+            return jsonify({'id': int(benchmark_id), 'benchmarking-complete': False, 'benchmarking-results': [
+                {'result-id': benchmark_sim.id, 'complete': benchmark_sim.complete},
+                {'result-id': benchmark_real.id, 'complete': benchmark_real.complete}]}), 200
     else:
         abort(404)
 
@@ -490,22 +530,11 @@ def get_benchmark(benchmark_id):
 @app.route('/qiskit-service/api/v1.0/providers', methods=['GET'])
 def get_providers():
     """Return available providers."""
-    return jsonify({
-        "_embedded": {
-            "providerDtoes": [
-                {
-                    "id": str(generate_deterministic_uuid("ibmq", "provider")),
-                    "name": "ibmq",
-                    "offeringURL": "https://quantum-computing.ibm.com/",
-                },
-                {
-                    "id": str(generate_deterministic_uuid("aws", "provider")),
-                    "name": "aws",
-                    "offeringURL": "https://aws.amazon.com/braket/",
-                }
-            ]
-        }
-    }), 200
+    return jsonify({"_embedded": {"providerDtoes": [
+        {"id": str(generate_deterministic_uuid("ibmq", "provider")), "name": "ibmq",
+         "offeringURL": "https://quantum-computing.ibm.com/", },
+        {"id": str(generate_deterministic_uuid("aws", "provider")), "name": "aws",
+         "offeringURL": "https://aws.amazon.com/braket/", }]}}), 200
 
 
 @app.route('/qiskit-service/api/v1.0/providers/<provider_id>/qpus', methods=['GET'])
@@ -538,10 +567,10 @@ def get_analysis_qpu(qpu_name):
     benchmarks = Benchmark.query.all()
     list = []
     for i in range(0, len(benchmarks), 2):
-        if (benchmarks[i].complete and benchmarks[i + 1].complete) and \
-                (benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and \
-                (benchmarks[i].result != "" and benchmarks[i + 1].result != "") and \
-                (benchmarks[i + 1].backend == qpu_name):
+        if (benchmarks[i].complete and benchmarks[i + 1].complete) and (
+                benchmarks[i].benchmark_id == benchmarks[i + 1].benchmark_id) and (
+                benchmarks[i].result != "" and benchmarks[i + 1].result != "") and (
+                benchmarks[i + 1].backend == qpu_name):
             counts_sim = json.loads(benchmarks[i].counts)
             counts_real = json.loads(benchmarks[i + 1].counts)
             shots = benchmarks[i + 1].shots
@@ -551,13 +580,8 @@ def get_analysis_qpu(qpu_name):
             intersection = analysis.calc_intersection(counts_sim.copy(), counts_real.copy(), shots)
             list.append({'benchmark-' + str(benchmarks[i].benchmark_id): {
                 'benchmark-location': '/qiskit-service/api/v1.0/benchmarks/' + str(benchmarks[i].benchmark_id),
-                'counts-sim': counts_sim,
-                'counts-real': counts_real,
-                'percentage-error': perc_error,
-                'chi-square': chi_square,
-                'correlation': correlation,
-                'histogram-intersection': intersection}
-            })
+                'counts-sim': counts_sim, 'counts-real': counts_real, 'percentage-error': perc_error,
+                'chi-square': chi_square, 'correlation': correlation, 'histogram-intersection': intersection}})
     return jsonify(list)
 
 
@@ -569,16 +593,11 @@ def version():
 def get_benchmark_body(benchmark_backend):
     return {'result-id': benchmark_backend.id,
             'result-location': '/qiskit-service/api/v1.0/results/' + benchmark_backend.id,
-            'backend': benchmark_backend.backend,
-            'counts': json.loads(benchmark_backend.counts),
-            'original-depth': benchmark_backend.original_depth,
-            'original-width': benchmark_backend.original_width,
+            'backend': benchmark_backend.backend, 'counts': json.loads(benchmark_backend.counts),
+            'original-depth': benchmark_backend.original_depth, 'original-width': benchmark_backend.original_width,
             'original-number-of-multi-qubit-gates': benchmark_backend.original_number_of_multi_qubit_gates,
             'transpiled-depth': benchmark_backend.transpiled_depth,
             'transpiled-width': benchmark_backend.transpiled_width,
             'transpiled-number-of-multi-qubit-gates': benchmark_backend.transpiled_number_of_multi_qubit_gates,
-            'clifford': benchmark_backend.clifford,
-            'benchmark-id': benchmark_backend.benchmark_id,
-            'complete': benchmark_backend.complete,
-            'shots': benchmark_backend.shots
-            }
+            'clifford': benchmark_backend.clifford, 'benchmark-id': benchmark_backend.benchmark_id,
+            'complete': benchmark_backend.complete, 'shots': benchmark_backend.shots}

@@ -1,6 +1,19 @@
 import marshmallow as ma
 
 
+class GenerateCircuitRequest:
+    def __init__(self, impl_url, impl_language, input_params):
+        self.impl_url = impl_url
+        self.impl_language = impl_language
+        self.input_params = input_params
+
+
+class GenerateCircuitRequestSchema(ma.Schema):
+    impl_url = ma.fields.String()
+    impl_language = ma.fields.String()
+    input_params = ma.fields.List(ma.fields.String())
+
+
 class TranspileRequest:
     def __init__(self, impl_url, impl_language, qpu_name, input_params, token):
         self.impl_url = impl_url

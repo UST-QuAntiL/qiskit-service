@@ -16,26 +16,66 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import base64
 import datetime
+import json
 
-from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq_handler
-from qiskit.transpiler.exceptions import TranspilerError
-from rq import get_current_job
-from qiskit.utils.measurement_error_mitigation import get_measured_qubits
-
-from qiskit_aer.noise import NoiseModel
 from qiskit import transpile, QuantumCircuit, Aer
+from qiskit.transpiler.exceptions import TranspilerError
+from qiskit.utils.measurement_error_mitigation import get_measured_qubits
+from qiskit_aer.noise import NoiseModel
+from rq import get_current_job
 
+from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq_handler, circuit_analysis
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
+from app.generated_circuit_model import Generated_Circuit
 from app.result_model import Result
-import json
-import base64
+
+
+def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
+    app.logger.info("Starting generate task...")
+    job = get_current_job()
+
+    generated_circuit_code = None
+    if impl_url:
+        generated_circuit_code = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
+    elif impl_data:
+        generated_circuit_code = implementation_handler.prepare_code_from_data(impl_data, input_params)
+    else:
+        generated_circuit = Generated_Circuit.query.get(job.get_id())
+        generated_circuit.generated_circuit = json.dumps({'error': 'generating circuit failed'})
+        generated_circuit.complete = True
+        db.session.commit()
+
+    if generated_circuit_code:
+        non_transpiled_depth_old = 0
+        generated_circuit = Generated_Circuit.query.get(job.get_id())
+        generated_circuit.generated_circuit = generated_circuit_code
+
+        non_transpiled_depth = generated_circuit_code.depth()
+        while non_transpiled_depth_old < non_transpiled_depth:
+            non_transpiled_depth_old = non_transpiled_depth
+            generated_circuit_code = generated_circuit_code.decompose()
+            non_transpiled_depth = generated_circuit_code.depth()
+        generated_circuit.original_depth = non_transpiled_depth
+        generated_circuit.original_width = circuit_analysis.get_width_of_circuit(generated_circuit_code)
+        generated_circuit.original_total_number_of_operations = generated_circuit_code.size()
+        generated_circuit.original_number_of_multi_qubit_gates = generated_circuit_code.num_nonlocal_gates()
+        generated_circuit.original_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(
+            generated_circuit_code)
+        generated_circuit.original_number_of_single_qubit_gates = generated_circuit.original_total_number_of_operations - generated_circuit.original_number_of_multi_qubit_gates - generated_circuit.original_number_of_measurement_operations
+        generated_circuit.original_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
+            generated_circuit_code)
+
+        generated_circuit.input_params = json.dumps(input_params)
+        generated_circuit.complete = True
+        db.session.commit()
 
 
 def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, access_key_aws,
-            secret_access_key_aws, qpu_name,
-            optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
+            secret_access_key_aws, qpu_name, optimization_level, noise_model, only_measurement_errors, shots,
+            bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -46,8 +86,7 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
         backend = ionq_handler.get_qpu(token, qpu_name)
     elif provider == 'aws':
         backend = aws_handler.get_qpu(access_key=access_key_aws, secret_access_key=secret_access_key_aws,
-                                      qpu_name=qpu_name,
-                                      **kwargs)
+                                      qpu_name=qpu_name, **kwargs)
     if not backend:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
