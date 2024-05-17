@@ -16,12 +16,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import os
+import shutil
+import sys
+import tempfile
 import urllib.parse
 from http.client import HTTPResponse
-from urllib import request, error
-import tempfile
-import os, sys, shutil
 from importlib import reload
+from urllib import request, error
+
 import qiskit
 from flask import abort
 

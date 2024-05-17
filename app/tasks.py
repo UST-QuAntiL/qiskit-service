@@ -43,33 +43,34 @@ def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
     elif impl_data:
         generated_circuit_code = implementation_handler.prepare_code_from_data(impl_data, input_params)
     else:
-        generated_circuit = Generated_Circuit.query.get(job.get_id())
-        generated_circuit.generated_circuit = json.dumps({'error': 'generating circuit failed'})
-        generated_circuit.complete = True
+        generated_circuit_object = Generated_Circuit.query.get(job.get_id())
+        generated_circuit_object.generated_circuit = json.dumps({'error': 'generating circuit failed'})
+        generated_circuit_object.complete = True
         db.session.commit()
 
     if generated_circuit_code:
         non_transpiled_depth_old = 0
-        generated_circuit = Generated_Circuit.query.get(job.get_id())
-        generated_circuit.generated_circuit = generated_circuit_code
+        generated_circuit_object = Generated_Circuit.query.get(job.get_id())
+        generated_circuit_object.generated_circuit = generated_circuit_code.qasm()
 
         non_transpiled_depth = generated_circuit_code.depth()
         while non_transpiled_depth_old < non_transpiled_depth:
             non_transpiled_depth_old = non_transpiled_depth
             generated_circuit_code = generated_circuit_code.decompose()
             non_transpiled_depth = generated_circuit_code.depth()
-        generated_circuit.original_depth = non_transpiled_depth
-        generated_circuit.original_width = circuit_analysis.get_width_of_circuit(generated_circuit_code)
-        generated_circuit.original_total_number_of_operations = generated_circuit_code.size()
-        generated_circuit.original_number_of_multi_qubit_gates = generated_circuit_code.num_nonlocal_gates()
-        generated_circuit.original_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(
+        generated_circuit_object.original_depth = non_transpiled_depth
+        generated_circuit_object.original_width = circuit_analysis.get_width_of_circuit(generated_circuit_code)
+        generated_circuit_object.original_total_number_of_operations = generated_circuit_code.size()
+        generated_circuit_object.original_number_of_multi_qubit_gates = generated_circuit_code.num_nonlocal_gates()
+        generated_circuit_object.original_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(
             generated_circuit_code)
-        generated_circuit.original_number_of_single_qubit_gates = generated_circuit.original_total_number_of_operations - generated_circuit.original_number_of_multi_qubit_gates - generated_circuit.original_number_of_measurement_operations
-        generated_circuit.original_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
+        generated_circuit_object.original_number_of_single_qubit_gates = generated_circuit_object.original_total_number_of_operations - generated_circuit_object.original_number_of_multi_qubit_gates - generated_circuit_object.original_number_of_measurement_operations
+        generated_circuit_object.original_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
             generated_circuit_code)
 
-        generated_circuit.input_params = json.dumps(input_params)
-        generated_circuit.complete = True
+        generated_circuit_object.input_params = json.dumps(input_params)
+        print(generated_circuit_object.input_params)
+        generated_circuit_object.complete = True
         db.session.commit()
 
 

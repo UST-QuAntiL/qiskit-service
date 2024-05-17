@@ -42,6 +42,7 @@ def generate_circuit():
     impl_url = request.json.get('impl-url', "")
     input_params = request.json.get('input-params', "")
     bearer_token = request.json.get("bearer-token", "")
+    impl_data = ''
     if input_params:
         input_params = parameters.ParameterDictionary(input_params)
 
