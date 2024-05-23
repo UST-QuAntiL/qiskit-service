@@ -19,6 +19,7 @@
 import base64
 import datetime
 import json
+import uuid
 
 from qiskit import transpile, QuantumCircuit, Aer
 from qiskit.transpiler.exceptions import TranspilerError
@@ -30,6 +31,7 @@ from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
 from app.generated_circuit_model import Generated_Circuit
+from app.post_processing_result_model import Post_Processing_Result
 from app.result_model import Result
 
 
@@ -69,14 +71,14 @@ def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
             generated_circuit_code)
 
         generated_circuit_object.input_params = json.dumps(input_params)
-        print(generated_circuit_object.input_params)
+        app.logger.info(f"Received input params for circuit generation: {generated_circuit_object.input_params}")
         generated_circuit_object.complete = True
         db.session.commit()
 
 
-def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, access_key_aws,
-            secret_access_key_aws, qpu_name, optimization_level, noise_model, only_measurement_errors, shots,
-            bearer_token, qasm_string, **kwargs):
+def execute(correlation_id, provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token,
+            access_key_aws, secret_access_key_aws, qpu_name, optimization_level, noise_model, only_measurement_errors,
+            shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -100,14 +102,14 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
     else:
         if qasm_string:
             circuits = [implementation_handler.prepare_code_from_qasm(qasm) for qasm in qasm_string]
-        elif impl_url:
+        elif impl_url and not correlation_id:
             if impl_language.lower() == 'openqasm':
                 # list of circuits
                 circuits = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
             else:
                 circuits = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in
                             impl_url]
-        elif impl_data:
+        elif impl_data and not correlation_id:
             impl_data = [base64.b64decode(data.encode()).decode() for data in impl_data]
             if impl_language.lower() == 'openqasm':
                 circuits = [implementation_handler.prepare_code_from_qasm(data) for data in impl_data]
@@ -168,6 +170,24 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
         result.result = json.dumps(job_result['counts'])
         result.complete = True
         db.session.commit()
+
+        # implementation contains post processing of execution results that has to be executed
+        if correlation_id and (impl_url or impl_data):
+            # TODO create new post processing result object
+            post_processing_result = Post_Processing_Result(id=str(uuid.uuid4()))
+            # prepare input data containing execution results and initial input params for generating the circuit
+            generated_circuit = Generated_Circuit.query.get(correlation_id)
+            input_params_for_post_processing = generated_circuit.input_params
+            input_params_for_post_processing['counts'] = json.dumps(job_result['counts'])
+
+            if impl_url:
+                result = implementation_handler.prepare_code_from_url(impl_url,
+                                                                      input_params=input_params_for_post_processing,
+                                                                      bearer_token=bearer_token, post_processing=True)
+            elif impl_data:
+                result = implementation_handler.prepare_post_processing_code_from_data(data=impl_data,
+                                                                                       input_params=input_params_for_post_processing)  # TODO save result in postprocessing result object
+
     else:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'execution failed'})

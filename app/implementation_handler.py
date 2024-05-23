@@ -61,15 +61,19 @@ def prepare_code_from_data(data, input_params):
     return circuit
 
 
-def prepare_code_from_url(url, input_params, bearer_token: str = ""):
+def prepare_code_from_url(url, input_params, bearer_token: str = "", post_processing=False):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
     try:
         impl = _download_code(url, bearer_token)
     except (error.HTTPError, error.URLError):
         return None
 
-    circuit = prepare_code_from_data(impl, input_params)
-    return circuit
+    if not post_processing:
+        circuit = prepare_code_from_data(impl, input_params)
+        return circuit
+    else:
+        result = prepare_post_processing_code_from_data(impl, input_params)
+        return result
 
 
 def prepare_code_from_qasm(qasm):
@@ -84,6 +88,34 @@ def prepare_code_from_qasm_url(url, bearer_token: str = ""):
         return None
 
     return prepare_code_from_qasm(impl)
+
+
+def prepare_post_processing_code_from_data(data, input_params):
+    """Get implementation code from data. Set input parameters into implementation. Return circuit."""
+    temp_dir = tempfile.mkdtemp()
+    with open(os.path.join(temp_dir, "__init__.py"), "w") as f:
+        f.write("")
+    with open(os.path.join(temp_dir, "downloaded_code.py"), "w") as f:
+        f.write(data)
+    sys.path.append(temp_dir)
+    try:
+        import downloaded_code
+
+        # deletes every attribute from downloaded_code, except __name__, because importlib.reload
+        # doesn't reset the module's global variables
+        for attr in dir(downloaded_code):
+            if attr != "__name__":
+                delattr(downloaded_code, attr)
+
+        reload(downloaded_code)
+        if 'post_processing' in dir(downloaded_code):
+            result = downloaded_code.post_processing(**input_params)
+    finally:
+        sys.path.remove(temp_dir)
+        shutil.rmtree(temp_dir, ignore_errors=True)
+    if not result:
+        raise ValueError
+    return result
 
 
 def _download_code(url: str, bearer_token: str = "") -> str:
