@@ -459,10 +459,16 @@ def get_result(result_id):
     result = Result.query.get(result_id)
     if result.complete:
         result_dict = json.loads(result.result)
-        post_processing_result_dict = json.loads(result.post_processing_result)
-        return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict, 'backend': result.backend,
-                        'shots': result.shots, 'generated-circuit-id': result.generated_circuit_id,
-                        'post-processing-result': post_processing_result_dict}), 200
+        if result.post_processing_result:
+            post_processing_result_dict = json.loads(result.post_processing_result)
+            return jsonify(
+                {'id': result.id, 'complete': result.complete, 'result': result_dict, 'backend': result.backend,
+                 'shots': result.shots, 'generated-circuit-id': result.generated_circuit_id,
+                 'post-processing-result': post_processing_result_dict}), 200
+        else:
+            return jsonify(
+                {'id': result.id, 'complete': result.complete, 'result': result_dict, 'backend': result.backend,
+                 'shots': result.shots}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
 
