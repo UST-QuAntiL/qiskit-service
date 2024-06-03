@@ -114,6 +114,7 @@ class BenchmarkResponseSchema(ma.Schema):
 
 class ResultsResponseSchema(ma.Schema):
     result = ma.fields.List(ma.fields.String())
+    post_processing_result = ma.fields.List(ma.fields.String())
 
 
 class AnalysisOriginalCircuitResponse:

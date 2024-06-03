@@ -32,7 +32,8 @@ class TranspileRequestSchema(ma.Schema):
 
 
 class ExecuteRequest:
-    def __init__(self, impl_url, impl_language, qpu_name, noise_model, only_measurement_errors, input_params, token):
+    def __init__(self, impl_url, impl_language, qpu_name, noise_model, only_measurement_errors, input_params, token,
+                 correlation_id, post_processing_result):
         self.impl_url = impl_url
         self.impl_language = impl_language
         self.qpu_name = qpu_name
@@ -40,6 +41,7 @@ class ExecuteRequest:
         self.only_measurement_errors = only_measurement_errors
         self.input_params = input_params
         self.token = token
+        self.correlation_id = correlation_id
 
 
 class ExecuteRequestSchema(ma.Schema):
@@ -50,3 +52,4 @@ class ExecuteRequestSchema(ma.Schema):
     token = ma.fields.String()
     noise_model = ma.fields.Str(required=False)
     only_measurement_errors = ma.fields.Boolean(required=False)
+    correlation_id = ma.fields.String()
