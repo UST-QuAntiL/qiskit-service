@@ -19,7 +19,6 @@
 import base64
 import datetime
 import json
-import uuid
 
 from qiskit import transpile, QuantumCircuit, Aer
 from qiskit.transpiler.exceptions import TranspilerError
@@ -31,7 +30,6 @@ from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
 from app.generated_circuit_model import Generated_Circuit
-from app.post_processing_result_model import Post_Processing_Result
 from app.result_model import Result
 
 
@@ -109,7 +107,7 @@ def execute(correlation_id, provider, impl_url, impl_data, impl_language, transp
             else:
                 circuits = [implementation_handler.prepare_code_from_url(url, input_params, bearer_token) for url in
                             impl_url]
-        elif impl_data and not correlation_id:
+        elif impl_data:
             impl_data = [base64.b64decode(data.encode()).decode() for data in impl_data]
             if impl_language.lower() == 'openqasm':
                 circuits = [implementation_handler.prepare_code_from_qasm(data) for data in impl_data]
@@ -168,25 +166,27 @@ def execute(correlation_id, provider, impl_url, impl_data, impl_language, transp
     if job_result:
         result = Result.query.get(job.get_id())
         result.result = json.dumps(job_result['counts'])
-        result.complete = True
-        db.session.commit()
 
-        # implementation contains post processing of execution results that has to be executed
+        # check if implementation contains post processing of execution results that has to be executed
         if correlation_id and (impl_url or impl_data):
-            # TODO create new post processing result object
-            post_processing_result = Post_Processing_Result(id=str(uuid.uuid4()))
+            result.generated_circuit_id = correlation_id
             # prepare input data containing execution results and initial input params for generating the circuit
             generated_circuit = Generated_Circuit.query.get(correlation_id)
-            input_params_for_post_processing = generated_circuit.input_params
-            input_params_for_post_processing['counts'] = json.dumps(job_result['counts'])
+            input_params_for_post_processing = json.loads(generated_circuit.input_params)
+            input_params_for_post_processing['counts'] = job_result['counts']
 
             if impl_url:
-                result = implementation_handler.prepare_code_from_url(impl_url,
-                                                                      input_params=input_params_for_post_processing,
-                                                                      bearer_token=bearer_token, post_processing=True)
+                post_p_result = implementation_handler.prepare_code_from_url(url=impl_url[0],
+                                                                             input_params=input_params_for_post_processing,
+                                                                             bearer_token=bearer_token,
+                                                                             post_processing=True)
             elif impl_data:
-                result = implementation_handler.prepare_post_processing_code_from_data(data=impl_data,
-                                                                                       input_params=input_params_for_post_processing)  # TODO save result in postprocessing result object
+                post_p_result = implementation_handler.prepare_post_processing_code_from_data(data=impl_data[0],
+                                                                                              input_params=input_params_for_post_processing)
+            result.post_processing_result = json.loads(post_p_result)
+
+        result.complete = True
+        db.session.commit()
 
     else:
         result = Result.query.get(job.get_id())

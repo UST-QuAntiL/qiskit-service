@@ -25,6 +25,8 @@ class Result(db.Model):
     result = db.Column(db.String(1200), default="")
     backend = db.Column(db.String(1200), default="")
     shots = db.Column(db.Integer, default=0)
+    generated_circuit_id = db.Column(db.String(36), db.ForeignKey('generated__circuit.id'), nullable=True)
+    post_processing_result = db.Column(db.String(1200), default="")
     complete = db.Column(db.Boolean, default=False)
 
     def __repr__(self):

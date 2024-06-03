@@ -313,6 +313,7 @@ def execute_circuit():
 
     # Default value is ibmq for services that do not support multiple providers and expect the IBMQ provider
     provider = request.json.get('provider', 'ibmq')
+    correlation_id = request.json.get('correlation-id', None)
 
     qpu_name = request.json['qpu-name']
     impl_language = request.json.get('impl-language', '')
@@ -375,11 +376,12 @@ def execute_circuit():
 
     shots = request.json.get('shots', 1024)
 
-    job = app.execute_queue.enqueue('app.tasks.execute', provider=provider, impl_url=impl_url, impl_data=impl_data,
-                                    impl_language=impl_language, transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
-                                    token=token, access_key_aws=aws_access_key_id,
-                                    secret_access_key_aws=aws_secret_access_key, input_params=input_params,
-                                    noise_model=noise_model, only_measurement_errors=only_measurement_errors,
+    job = app.execute_queue.enqueue('app.tasks.execute', correlation_id=correlation_id, provider=provider,
+                                    impl_url=impl_url, impl_data=impl_data, impl_language=impl_language,
+                                    transpiled_qasm=transpiled_qasm, qpu_name=qpu_name, token=token,
+                                    access_key_aws=aws_access_key_id, secret_access_key_aws=aws_secret_access_key,
+                                    input_params=input_params, noise_model=noise_model,
+                                    only_measurement_errors=only_measurement_errors,
                                     optimization_level=optimization_level, shots=shots, bearer_token=bearer_token,
                                     qasm_string=qasm_string, **credentials)
 
@@ -457,8 +459,10 @@ def get_result(result_id):
     result = Result.query.get(result_id)
     if result.complete:
         result_dict = json.loads(result.result)
+        post_processing_result_dict = json.loads(result.post_processing_result)
         return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict, 'backend': result.backend,
-                        'shots': result.shots}), 200
+                        'shots': result.shots, 'generated-circuit-id': result.generated_circuit_id,
+                        'post-processing-result': post_processing_result_dict}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
 
