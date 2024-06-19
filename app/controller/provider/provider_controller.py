@@ -1,12 +1,9 @@
 from flask_smorest import Blueprint
-from app.model.calculation_request import ProviderSchema
-from app import routes
 
-blp = Blueprint(
-    "Get up-to-date data of QPUs",
-    __name__,
-    description="Get provider Information",
-)
+from app import routes
+from app.model.calculation_request import ProviderSchema
+
+blp = Blueprint("Get up-to-date data of QPUs", __name__, description="Get provider information.", )
 
 
 @blp.route("/qiskit-service/api/v1.0/providers", methods=["GET"])
