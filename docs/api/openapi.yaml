@@ -7,12 +7,12 @@ servers:
 - url: /
 tags:
 - name: Transpile
-  description: "Send implementation, input, QPU information, and your IBM Quantum\
-    \ Experience token to the API to get analyzed properties of the transpiled circuit\
-    \ and the transpiled OpenQASM circuit itself."
+  description: "Send implementation, input, QPU information, and your access token\
+    \ to the API to get analyzed properties of the transpiled circuit and the transpiled\
+    \ OpenQASM circuit itself."
 - name: Execute
-  description: "Send implementation, input, QPU information, and your IBM Quantum\
-    \ Experience token to the API to execute your circuit and get the result."
+  description: "Send implementation, input, QPU information, and your access token\
+    \ for IonQ or IBMQ QPUs to the API to execute your circuit and get the result."
 - name: Calibrate Matrix Calculation
   description: "Send QPU information, optional shots, and your IBM Quantum Experience\
     \ token to the API to calculate the calibration matrix for the given QPU."
@@ -32,9 +32,14 @@ tags:
   description: Request the wd-value of a specific Quantum Computer based on the clifford
     gate circuit data in your database
 - name: Get up-to-date data of QPUs
-  description: Get provider Information
+  description: Get provider information.
 - name: Results
-  description: ""
+  description: Get execution results of an executed circuit.
+- name: Generated Circuits
+  description: Request a generated circuit and its properties.
+- name: Generate Circuit
+  description: Send implementation and input parameters to the API to generate your
+    circuit and get its properties.
 paths:
   /qiskit-service/api/v1.0/transpile:
     post:
@@ -142,6 +147,7 @@ paths:
             example:
               impl-url: https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py
               qpu-name: ibmq_qasm_simulator
+              provider: ibmq
               impl-language: qiskit
               token: YOUR-IBMQ-TOKEN
               input-params: {}
@@ -458,6 +464,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /qiskit-service/api/v1.0/generated-circuits/{id}:
+    get:
+      tags:
+      - Generated Circuits
+      parameters:
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minLength: 1
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedCircuitsResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /qiskit-service/api/v1.0/generate-circuit:
+    post:
+      tags:
+      - Generate Circuit
+      requestBody:
+        description: "                Generation via URL:\n                    \"\
+          impl-url\": \"URL-OF-IMPLEMENTATION\" \n                Generation via data:\n\
+          \                    \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"\n\
+          \                the \"input-params\"are of the form:\n                \
+          \    \"input-params\": {\n                        \"PARAM-NAME-1\": {\n\
+          \                            \"rawValue\": \"YOUR-VALUE-1\",\n         \
+          \                   \"type\": \"Integer\"\n                        },\n\
+          \                        \"PARAM-NAME-2\": {\n                         \
+          \   \"rawValue\": \"YOUR-VALUE-2\",\n                            \"type\"\
+          : \"String\"\n                        },\n                        ...\n\
+          \                        "
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCircuitRequest'
+            example:
+              impl-url: https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py
+              impl-language: qiskit
+              input-params: {}
+        required: true
+      responses:
+        "200":
+          description: Returns a content location for the generated circuit and its
+            properties. Access it via GET
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateCircuitResponse'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Error:
@@ -466,15 +543,15 @@ components:
         message:
           type: string
           description: Error message
+        errors:
+          type: object
+          description: Errors
         status:
           type: string
           description: Error name
         code:
           type: integer
           description: Error code
-        errors:
-          type: object
-          description: Errors
     PaginationMetadata:
       type: object
       properties:
@@ -495,56 +572,64 @@ components:
     TranspileRequest:
       type: object
       properties:
+        impl_language:
+          type: string
         qpu_name:
           type: string
         input_params:
           type: array
           items:
             type: string
+        impl_url:
+          type: string
+        qasm_string:
+          type: string
         token:
           type: string
-        impl_language:
-          type: string
-        impl_url:
+        provider:
           type: string
     TranspileResponse:
       type: object
       properties:
-        number_of_single_qubit_gates:
-          type: integer
-        transpiled_qasm:
-          type: string
         depth:
-          type: integer
-        total_number_of_operations:
           type: integer
         number_of_multi_qubit_gates:
           type: integer
+        multi_qubit_gate_depth:
+          type: integer
         width:
           type: integer
-        multi_qubit_gate_depth:
+        total_number_of_operations:
+          type: integer
+        number_of_single_qubit_gates:
           type: integer
         number_of_measurement_operations:
           type: integer
+        transpiled_qasm:
+          type: string
     ExecuteRequest:
       type: object
       properties:
-        qpu_name:
+        impl_language:
+          type: string
+        provider:
+          type: string
+        noise_model:
           type: string
         only_measurement_errors:
           type: boolean
+        qpu_name:
+          type: string
+        correlation_id:
+          type: string
+        impl_url:
+          type: string
+        token:
+          type: string
         input_params:
           type: array
           items:
             type: string
-        token:
-          type: string
-        impl_language:
-          type: string
-        impl_url:
-          type: string
-        noise_model:
-          type: string
     ExecuteResponse:
       type: object
       properties:
@@ -553,11 +638,11 @@ components:
     CalcCalibrationMatrixRequest:
       type: object
       properties:
-        qpu_name:
+        token:
           type: string
         shots:
           type: integer
-        token:
+        qpu_name:
           type: string
     CalcCalibrationMatrixResponse:
       type: object
@@ -567,22 +652,22 @@ components:
     BenchmarkRequest:
       type: object
       properties:
-        qpu_name:
-          type: string
-        number_of_circuits:
-          type: integer
         min_depth:
           type: integer
         number_of_qubits:
           type: integer
         max_depth:
           type: integer
+        number_of_circuits:
+          type: integer
+        qpu_name:
+          type: string
         clifford:
           type: boolean
-        token:
-          type: string
         shots:
           type: integer
+        token:
+          type: string
     BenchmarkResponse:
       type: object
       properties:
@@ -593,6 +678,10 @@ components:
     ResultsResponse:
       type: object
       properties:
+        post_processing_result:
+          type: array
+          items:
+            type: string
         result:
           type: array
           items:
@@ -611,10 +700,55 @@ components:
     AnalysisOriginalCircuitResponse:
       type: object
       properties:
-        result:
+        original_number_of_multi_qubit_gates:
+          type: integer
+        original_number_of_measurement_operations:
+          type: integer
+        original_total_number_of_operations:
+          type: integer
+        original_width:
+          type: integer
+        original_number_of_single_qubit_gates:
+          type: integer
+        original_multi_qubit_gate_depth:
+          type: integer
+        original_depth:
+          type: integer
+    GeneratedCircuitsResponse:
+      type: object
+      properties:
+        original_number_of_multi_qubit_gates:
+          type: integer
+        original_number_of_measurement_operations:
+          type: integer
+        generated_circuit:
+          type: string
+        original_total_number_of_operations:
+          type: integer
+        original_width:
+          type: integer
+        original_number_of_single_qubit_gates:
+          type: integer
+        original_multi_qubit_gate_depth:
+          type: integer
+        original_depth:
+          type: integer
+    GenerateCircuitRequest:
+      type: object
+      properties:
+        impl_language:
+          type: string
+        input_params:
           type: array
           items:
             type: string
+        impl_url:
+          type: string
+    GenerateCircuitResponse:
+      type: object
+      properties:
+        location:
+          type: string
   responses:
     UNPROCESSABLE_ENTITY:
       description: Unprocessable Entity
