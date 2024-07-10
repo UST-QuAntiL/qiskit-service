@@ -17,7 +17,21 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import app, db
-from app.result_model import Result
-from app.benchmark_model import Benchmark
-from app.generated_circuit_model import Generated_Circuit
+from app import db
+
+
+class Generated_Circuit(db.Model):
+    id = db.Column(db.String(36), primary_key=True)
+    generated_circuit = db.Column(db.String(1200), default="")
+    input_params = db.Column(db.String(1200), default="")
+    original_depth = db.Column(db.Integer)
+    original_width = db.Column(db.Integer)
+    original_total_number_of_operations = db.Column(db.Integer)
+    original_number_of_multi_qubit_gates = db.Column(db.Integer)
+    original_number_of_measurement_operations = db.Column(db.Integer)
+    original_number_of_single_qubit_gates = db.Column(db.Integer)
+    original_multi_qubit_gate_depth = db.Column(db.Integer)
+    complete = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return 'Generated_Circuit {}'.format(self.generated_circuit)

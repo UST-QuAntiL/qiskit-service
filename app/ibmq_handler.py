@@ -1,5 +1,5 @@
 # ******************************************************************************
-#  Copyright (c) 2020-2021 University of Stuttgart
+#  Copyright (c) 2020-2024 University of Stuttgart
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -18,22 +18,26 @@
 # ******************************************************************************
 from time import sleep
 
-from qiskit import QiskitError, QuantumRegister, execute
-from qiskit.utils.mitigation import CompleteMeasFitter, complete_meas_cal
-from qiskit.providers.ibmq import IBMQ
+from qiskit import QiskitError, QuantumRegister, execute, Aer
 from qiskit.compiler import assemble
-from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.providers.exceptions import JobError, JobTimeoutError
+from qiskit.providers.ibmq import IBMQ
+from qiskit.providers.jobstatus import JOB_FINAL_STATES
+from qiskit.utils.mitigation import CompleteMeasFitter, complete_meas_cal
 
 
-def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group='open', project='main'):
+def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', hub='ibm-q', group='open',
+            project='main'):
     """Load account from token. Get backend."""
     try:
         IBMQ.disable_account()
     except:
         pass
     provider = IBMQ.enable_account(token=token, url=url, hub=hub, group=group, project=project)
-    backend = provider.get_backend(qpu_name)
+    if 'simulator' in qpu_name:
+        backend = Aer.get_backend('aer_simulator')
+    else:
+        backend = provider.get_backend(qpu_name)
     return backend
 
 

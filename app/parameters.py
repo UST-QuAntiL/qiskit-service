@@ -1,5 +1,5 @@
 # ******************************************************************************
-#  Copyright (c) 2020 University of Stuttgart
+#  Copyright (c) 2024 University of Stuttgart
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -16,23 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import json
 
 
 class ParameterDictionary(dict):
-
     """
     Definition of supported parameter types
     """
-    __parameter_types = {
-        "String": str,
-        "Integer": int,
-        "Float": float,
-        "Unknown": str
-    }
+    __parameter_types = {"String": str, "Integer": int, "Float": float, "Unknown": str, "Array": list,
+                         "FloatArray": list}
 
     """
         Converts a given parameter type definition pair to a parameter of the defined type. 
     """
+
     @classmethod
     def __convert_to_typed_parameter(cls, parameter):
 
@@ -43,15 +40,20 @@ class ParameterDictionary(dict):
             return None
 
         try:
-            t = ParameterDictionary.__parameter_types[parameter['type']]
-            value = parameter['rawValue']
-            return t(value)
+            if parameter["type"] == "FloatArray":
+                value = json.loads(parameter['rawValue'])
+                return value
+            else:
+                t = ParameterDictionary.__parameter_types[parameter['type']]
+                value = parameter['rawValue']
+                return t(value)
         except:
             return None
 
     """
         Initializes a typed parameter dictionary from the given raw dictionary
     """
+
     def __init__(self, other: dict):
 
         # Convert all the entries to typed entries
@@ -62,12 +64,14 @@ class ParameterDictionary(dict):
     """
         Returns the given parameter (case insensitive)
     """
+
     def __getitem__(self, item):
         return super(ParameterDictionary, self).__getitem__(item.lower())
 
     """
        Sets the given parameter (case insensitive)
     """
+
     def __setitem__(self, key, value):
 
         if isinstance(value, dict):

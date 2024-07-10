@@ -16,26 +16,67 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import base64
 import datetime
+import json
 
-from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq_handler
-from qiskit.transpiler.exceptions import TranspilerError
-from rq import get_current_job
-from qiskit.utils.measurement_error_mitigation import get_measured_qubits
-
-from qiskit_aer.noise import NoiseModel
 from qiskit import transpile, QuantumCircuit, Aer
+from qiskit.transpiler.exceptions import TranspilerError
+from qiskit.utils.measurement_error_mitigation import get_measured_qubits
+from qiskit_aer.noise import NoiseModel
+from rq import get_current_job
 
+from app import implementation_handler, aws_handler, ibmq_handler, db, app, ionq_handler, circuit_analysis
 from app.NumpyEncoder import NumpyEncoder
 from app.benchmark_model import Benchmark
+from app.generated_circuit_model import Generated_Circuit
 from app.result_model import Result
-import json
-import base64
 
 
-def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token, access_key_aws,
-            secret_access_key_aws, qpu_name,
-            optimization_level, noise_model, only_measurement_errors, shots, bearer_token, qasm_string, **kwargs):
+def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
+    app.logger.info("Starting generate task...")
+    job = get_current_job()
+
+    generated_circuit_code = None
+    if impl_url:
+        generated_circuit_code = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
+    elif impl_data:
+        generated_circuit_code = implementation_handler.prepare_code_from_data(impl_data, input_params)
+    else:
+        generated_circuit_object = Generated_Circuit.query.get(job.get_id())
+        generated_circuit_object.generated_circuit = json.dumps({'error': 'generating circuit failed'})
+        generated_circuit_object.complete = True
+        db.session.commit()
+
+    if generated_circuit_code:
+        non_transpiled_depth_old = 0
+        generated_circuit_object = Generated_Circuit.query.get(job.get_id())
+        generated_circuit_object.generated_circuit = generated_circuit_code.qasm()
+
+        non_transpiled_depth = generated_circuit_code.depth()
+        while non_transpiled_depth_old < non_transpiled_depth:
+            non_transpiled_depth_old = non_transpiled_depth
+            generated_circuit_code = generated_circuit_code.decompose()
+            non_transpiled_depth = generated_circuit_code.depth()
+        generated_circuit_object.original_depth = non_transpiled_depth
+        generated_circuit_object.original_width = circuit_analysis.get_width_of_circuit(generated_circuit_code)
+        generated_circuit_object.original_total_number_of_operations = generated_circuit_code.size()
+        generated_circuit_object.original_number_of_multi_qubit_gates = generated_circuit_code.num_nonlocal_gates()
+        generated_circuit_object.original_number_of_measurement_operations = circuit_analysis.get_number_of_measurement_operations(
+            generated_circuit_code)
+        generated_circuit_object.original_number_of_single_qubit_gates = generated_circuit_object.original_total_number_of_operations - generated_circuit_object.original_number_of_multi_qubit_gates - generated_circuit_object.original_number_of_measurement_operations
+        generated_circuit_object.original_multi_qubit_gate_depth, non_transpiled_circuit = circuit_analysis.get_multi_qubit_gate_depth(
+            generated_circuit_code)
+
+        generated_circuit_object.input_params = json.dumps(input_params)
+        app.logger.info(f"Received input params for circuit generation: {generated_circuit_object.input_params}")
+        generated_circuit_object.complete = True
+        db.session.commit()
+
+
+def execute(correlation_id, provider, impl_url, impl_data, impl_language, transpiled_qasm, input_params, token,
+            access_key_aws, secret_access_key_aws, qpu_name, optimization_level, noise_model, only_measurement_errors,
+            shots, bearer_token, qasm_string, **kwargs):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     app.logger.info("Starting execute task...")
     job = get_current_job()
@@ -46,8 +87,7 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
         backend = ionq_handler.get_qpu(token, qpu_name)
     elif provider == 'aws':
         backend = aws_handler.get_qpu(access_key=access_key_aws, secret_access_key=secret_access_key_aws,
-                                      qpu_name=qpu_name,
-                                      **kwargs)
+                                      qpu_name=qpu_name, **kwargs)
     if not backend:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'qpu-name or token wrong'})
@@ -60,7 +100,7 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
     else:
         if qasm_string:
             circuits = [implementation_handler.prepare_code_from_qasm(qasm) for qasm in qasm_string]
-        elif impl_url:
+        elif impl_url and not correlation_id:
             if impl_language.lower() == 'openqasm':
                 # list of circuits
                 circuits = [implementation_handler.prepare_code_from_qasm_url(url, bearer_token) for url in impl_url]
@@ -126,8 +166,28 @@ def execute(provider, impl_url, impl_data, impl_language, transpiled_qasm, input
     if job_result:
         result = Result.query.get(job.get_id())
         result.result = json.dumps(job_result['counts'])
+
+        # check if implementation contains post processing of execution results that has to be executed
+        if correlation_id and (impl_url or impl_data):
+            result.generated_circuit_id = correlation_id
+            # prepare input data containing execution results and initial input params for generating the circuit
+            generated_circuit = Generated_Circuit.query.get(correlation_id)
+            input_params_for_post_processing = json.loads(generated_circuit.input_params)
+            input_params_for_post_processing['counts'] = job_result['counts']
+
+            if impl_url:
+                post_p_result = implementation_handler.prepare_code_from_url(url=impl_url[0],
+                                                                             input_params=input_params_for_post_processing,
+                                                                             bearer_token=bearer_token,
+                                                                             post_processing=True)
+            elif impl_data:
+                post_p_result = implementation_handler.prepare_post_processing_code_from_data(data=impl_data[0],
+                                                                                              input_params=input_params_for_post_processing)
+            result.post_processing_result = json.loads(post_p_result)
+
         result.complete = True
         db.session.commit()
+
     else:
         result = Result.query.get(job.get_id())
         result.result = json.dumps({'error': 'execution failed'})

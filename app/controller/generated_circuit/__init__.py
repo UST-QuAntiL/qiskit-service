@@ -1,0 +1,1 @@
+from app.controller.generated_circuit.generated_circuit_controller import blp
