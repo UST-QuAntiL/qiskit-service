@@ -186,7 +186,7 @@ def transpile_circuit():
             credentials['group'] = input_params['group']
         if 'project' in input_params:
             credentials['project'] = input_params['project']
-        backend = ibmq_handler.get_qpu(token, qpu_name, **credentials)
+        backend = ibmq_handler.get_qpu_for_transpilation(token, qpu_name, **credentials)
     elif provider == 'ionq':
         backend = ionq_handler.get_qpu(token, qpu_name)
     elif provider == 'aws':
