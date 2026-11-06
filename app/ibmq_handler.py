@@ -21,6 +21,7 @@ from time import sleep
 from qiskit import QiskitError, QuantumRegister, execute, Aer
 from qiskit.compiler import assemble
 from qiskit.providers.exceptions import JobError, JobTimeoutError
+from qiskit.providers.fake_provider import FakeProvider
 from qiskit.providers.ibmq import IBMQ
 from qiskit.providers.jobstatus import JOB_FINAL_STATES
 from qiskit.utils.mitigation import CompleteMeasFitter, complete_meas_cal
@@ -39,6 +40,19 @@ def get_qpu(token, qpu_name, url='https://auth.quantum-computing.ibm.com/api', h
     else:
         backend = provider.get_backend(qpu_name)
     return backend
+
+
+def get_qpu_for_transpilation(token, qpu_name, **credentials):
+    """Get a backend to transpile for. The legacy IBM Quantum API used by IBMQ.enable_account was shut down, so
+    simulators are resolved without login and devices with a calibration snapshot shipped with Qiskit
+    (e.g. ibmq_valencia -> fake_valencia) are resolved from that snapshot. Other devices still use get_qpu."""
+    if 'simulator' in qpu_name:
+        return Aer.get_backend('aer_simulator')
+    snapshot_name = 'fake_' + qpu_name.removeprefix('ibmq_').removeprefix('ibm_')
+    for snapshot in FakeProvider().backends():
+        if snapshot.name() == snapshot_name:
+            return snapshot
+    return get_qpu(token, qpu_name, **credentials)
 
 
 def delete_token():
